@@ -79,7 +79,7 @@ kuber0 ansible_host=<node1.ip> ansible_port=22
 [kuber_node]
 kuber0 ansible_host=<node1.ip> ansible_port=22
 kuber1 ansible_host=<node2.ip> ansible_port=22
-## kuber2 ansible_host=<node3.ip> ansible_port=22
+kuber2 ansible_host=<node3.ip> ansible_port=22
 
 [kubernetes:children]
 kuber_master
@@ -99,5 +99,9 @@ registry
 [kuber_addition_node]
 ## kuber2 ansible_host=<node3.ip> ansible_port=22
 ```
-
-
+ansible依次执行安装
+```
+ansible-playbook -i hosts install_etcd.yml
+ansible-playbook -i hosts install_k8s_master.yml
+ansible-playbook -i hosts install_k8s_node.yml
+```
