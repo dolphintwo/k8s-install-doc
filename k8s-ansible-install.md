@@ -1,5 +1,5 @@
-# 1.免密登陆配置 #
-## 1.1 设置主机名 #
+# 1.免密登陆配置
+## 1.1 设置主机名
 
 主机|内网ip|外网ip|备注
 -----|-----|-----|-----
@@ -10,8 +10,8 @@ node3|172.21.7.14||
 ```
 hostnamectl set-hostname <hostname>
 ```
-## 1.2 免密登陆配置 #
-### 1.2.1 修改hosts文件 #
+## 1.2 免密登陆配置
+### 1.2.1 修改hosts文件
 ```
 vim /etc/hosts
 #增加如下配置
@@ -19,7 +19,8 @@ vim /etc/hosts
 172.21.7.13 node2
 172.21.7.14 node3
 ```
-### 1.2.2 生成密钥 #
+验证方法 安装机ping node1解析到ip
+### 1.2.2 生成密钥
 ```
 # ssh-keygen -t rsa
 Generating public/private rsa key pair.
@@ -50,22 +51,22 @@ The key's randomart image is:
 [@node1]# cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys
 [@node1]# chmod 600 ~/.ssh/authorized_keys
 ```
-验证从ansible安装机到被安装机免密登陆
-# 2.内核升级 #
+*验证从ansible安装机到被安装机免密登陆*
+# 2.内核升级
 
-# 3.磁盘挂载 #
+# 3.磁盘挂载
 
-# 4.ansible下载与配置 #
-## 4.1 clone ansible工程 #
+# 4.ansible安装k8s
+## 4.1 clone ansible工程
 ```
 git clone -b develop https://code.newtouch.com/newtouchone/k8s-ansible.git
 ```
-## 4.2 进入工程files/下，下载依赖 #
+## 4.2 进入工程files/下，下载依赖
 ```
 cd k8s-ansible/files
 sh download_dependence.sh
 ```
-## 4.3 配置工程hosts文件 #
+## 4.3 配置工程hosts文件
 修改etcd,master,node节点信息
 ```
 [etcdservers]
@@ -104,4 +105,62 @@ ansible依次执行安装
 ansible-playbook -i hosts install_etcd.yml
 ansible-playbook -i hosts install_k8s_master.yml
 ansible-playbook -i hosts install_k8s_node.yml
+ansible-playbook -i hosts install_registry.yml
+ansible-playbook -i hosts install_k8s_addon.yml
 ```
+*每一步执行都查看是否报错，ansible安装出错执行回滚*
+```
+ansible-playbook -i hosts uninstall.yml
+```
+
+# 5.zookeeper安装
+前置环境检验
+zookeeper是在node上浮动的，所以安装在任意节点即可
+在任意节点创建zk-deployment
+```
+vi one-zk-deployment.yaml
+#创建deployment
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: zookeeper
+  namespace: newtouchone
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+        node: 10.26.7.85
+    spec:
+      hostname: zookeeper
+      containers:
+      - name: zookeeper
+        image: 10.26.7.81:5000/newtouchone/v4-zookeeper:3.4.9 
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 2181
+#启动
+kubectl create -f one-zk-deployment.yaml
+```
+创建zk-service
+```
+vi one-zk-service.yaml
+#创建service
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper
+  namespace: newtouchone
+  labels:
+    app: zookeeper
+spec:
+  selector:
+    app: zookeeper
+  type: NodePort
+  ports:
+  -port: 2181 
+#启动
+kubectl create -f one-zk-service.yaml
+```
+
