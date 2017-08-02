@@ -112,11 +112,19 @@ ansible-playbook -i hosts install_k8s_addon.yml
 ```
 ansible-playbook -i hosts uninstall.yml
 ```
+registry安装后上传镜像到路径
+```
+```
 
 # 5.zookeeper安装
 前置环境检验
 zookeeper是在node上浮动的，所以安装在任意节点即可
 在任意节点创建zk-deployment
+修改以下配置中的：
+参数|备注
+----|----
+namespace|
+node|为部署节点
 ```
 vi one-zk-deployment.yaml
 #创建deployment
