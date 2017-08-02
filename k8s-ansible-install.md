@@ -117,7 +117,10 @@ registry安装后上传镜像到路径
 ```
 
 # 5.zookeeper安装
-前置环境检验
+前置环境检验|
+-----|
+registry中镜像有v4-zookeeper:3.4.9 
+
 zookeeper是在node上浮动的，所以安装在任意节点即可
 在任意节点创建zk-deployment
 修改以下配置中的：
@@ -148,7 +151,9 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 2181
-#启动
+```
+启动zk-deployment
+```
 kubectl create -f one-zk-deployment.yaml
 ```
 创建zk-service
@@ -168,7 +173,16 @@ spec:
   type: NodePort
   ports:
   -port: 2181 
-#启动
+```
+启动zk-service
+```
 kubectl create -f one-zk-service.yaml
 ```
+# 6. 安装ceph
 
+前置环境检验
+
+|registry中镜像有|
+|-----|
+|ceph-daemon_latest|
+|paas-ceph-wrapper_20161013|
