@@ -117,9 +117,11 @@ registry安装后上传镜像到路径
 ```
 
 # 5.zookeeper安装
-前置环境检验|
------|
-registry中镜像有v4-zookeeper:3.4.9 
+前置环境检验
+
+|registry中镜像有|
+|----|
+|v4-zookeeper:3.4.9|
 
 zookeeper是在node上浮动的，所以安装在任意节点即可
 在任意节点创建zk-deployment
@@ -186,3 +188,55 @@ kubectl create -f one-zk-service.yaml
 |-----|
 |ceph-daemon_latest|
 |paas-ceph-wrapper_20161013|
+
+## 6.1 启动MONITOER
+修改以下配置中的：
+参数|备注
+----|----
+IP地址|镜像仓库地址
+
+```
+docker run -d \
+–net=host \
+–restart always \
+-v /etc/ceph:/etc/ceph \
+-v /var/lib/ceph/:/var/lib/ceph/ \
+-e MON_IP=10.26.7.86 \
+-e CEPH_PUBLIC_NETWORK=10.26.7.1/16 \
+10.26.7.81:5000/newtouchone/ceph-daemon mon
+```
+这里因为是单点部署，需要在CEPH配置文件（/etc/ceph/ceph.conf）添加以下参数
+```
+echo "
+osd pool default size = 1
+osd pool default min size = 1
+osd crush chooseleaf type = 0
+" >> /etc/ceph/ceph.conf
+```
+重启容器
+```
+docker restart {MONITOER容器ID}
+```
+
+## 6.2 启动MDS
+```
+docker run -d \
+    –net=host \
+    -v /etc/ceph:/etc/ceph \
+    -v /var/lib/ceph/:/var/lib/ceph/ \
+    -e CEPHFS_CREATE=1 \
+    10.26.7.81:5000/newtouchone/ceph-daemon mds
+```
+
+## 6.2 启动ODS
+```
+docker run -d \
+    –net=host \
+    –privileged=true \
+    -v /etc/ceph:/etc/ceph \
+    -v /var/lib/ceph/:/var/lib/ceph/ \
+    -v /dev/:/dev/ \
+    -v /ceph:/var/lib/ceph/osd \
+    10.26.7.81:5000/newtouchone/ceph-daemon osd_directory
+```
+
