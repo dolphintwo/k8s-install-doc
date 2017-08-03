@@ -57,6 +57,12 @@ The key's randomart image is:
 # 3.磁盘挂载
 
 # 4.ansible安装k8s
+前置条件
+安装ansible
+```
+yum install epel-release
+yum install ansible
+```
 ## 4.1 clone ansible工程
 ```
 git clone -b develop https://code.newtouch.com/newtouchone/k8s-ansible.git
@@ -91,7 +97,7 @@ kubernetes
 etcdservers
 
 [registry]
-registry0 ansible_host=<node2.ip> ansible_port=22
+registry0 ansible_host=<node1.ip> ansible_port=22
 
 [kuber_node_and_registry:children]
 kuber_node
@@ -114,6 +120,7 @@ ansible-playbook -i hosts uninstall.yml
 ```
 registry安装后上传镜像到路径
 ```
+/root/registry/
 ```
 
 # 5.zookeeper安装
@@ -130,9 +137,26 @@ zookeeper是在node上浮动的，所以安装在任意节点即可
 ----|----
 namespace|
 node|为部署节点
+创建并启动namespace
 ```
 vi one-zk-deployment.yaml
-#创建deployment
+```
+```
+apiVersion: v1  
+kind: Namespace  
+metadata:  
+   name: newtouchone  
+   labels:  
+     name: newtouchone
+```
+```
+kubectl create -f one-namespace.yml
+```
+创建并启动deployment
+```
+vi one-zk-deployment.yaml
+```
+```
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -154,14 +178,15 @@ spec:
         ports:
         - containerPort: 2181
 ```
-启动zk-deployment
+
 ```
 kubectl create -f one-zk-deployment.yaml
 ```
-创建zk-service
+创建并启动zk-service
 ```
 vi one-zk-service.yaml
-#创建service
+```
+```
 apiVersion: v1
 kind: Service
 metadata:
@@ -176,7 +201,6 @@ spec:
   ports:
   -port: 2181 
 ```
-启动zk-service
 ```
 kubectl create -f one-zk-service.yaml
 ```
@@ -190,10 +214,10 @@ kubectl create -f one-zk-service.yaml
 |paas-ceph-wrapper_20161013|
 
 ## 6.1 启动MONITOER
-修改以下配置中的：
-参数|备注
-----|----
-IP地址|镜像仓库地址
+修改以下配置中的：（下同）
+|参数|备注|
+|------|------|
+|IP地址|镜像仓库地址|
 
 ```
 docker run -d \
@@ -228,7 +252,7 @@ docker run -d \
     10.26.7.81:5000/newtouchone/ceph-daemon mds
 ```
 
-## 6.2 启动ODS
+## 6.3 启动ODS
 ```
 docker run -d \
     –net=host \
@@ -239,4 +263,75 @@ docker run -d \
     -v /ceph:/var/lib/ceph/osd \
     10.26.7.81:5000/newtouchone/ceph-daemon osd_directory
 ```
+*（注：挂载到/var/lib/ceph/osd的目录为实际数据盘存储目录，目录格式必须为xfs格式，一般使用物理机挂载的磁盘目录，例如物理机挂载500G磁盘至/ceph目录，那么这里volume的参数则设置为 -v /ceph:/var/lib/ceph/osd。ODS可根据磁盘容量需要，挂载多个磁盘）*
+
+## 6.4 启动RGW
+```
+docker run -d \
+ –net=host \
+ –restart always \
+ -v /etc/ceph:/etc/ceph \
+ -v /var/lib/ceph/:/var/lib/ceph/ \
+ -e RGW_CIVETWEB_PORT=7480 \
+ 10.26.7.81:5000/newtouchone/ceph-daemon rgw
+#结果显示如下
+4a7c507a40b5f2514a6e20b518679e1b877c238d1400a44ac38934e79e4d3d6d
+#添加网关用户
+docker exec -ti 4a7c507a40b5 radosgw-admin user create –uid="admin" –display-name="admin"
+#结果显示如下
+{
+    "user_id": "admin",
+    "display_name": "admin",
+    "email": "",
+    "suspended": 0,
+    "max_buckets": 1000,
+    "auid": 0,
+    "subusers": [],
+    "keys": [
+        {
+            "user": "admin",
+            "access_key": "P8JUQ0E22YHSMC3G4Y1D",
+            "secret_key": "kt2RS5CwFug28siGwOPZBAIVJDnmaLfTj5jEK36W"
+        }
+    ],
+    "swift_keys": [],
+    "caps": [],
+    "op_mask": "read, write, delete",
+    "default_placement": "",
+    "placement_tags": [],
+    "bucket_quota": {
+        "enabled": false,
+        "max_size_kb": -1,
+        "max_objects": -1
+    },
+    "user_quota": {
+        "enabled": false,
+        "max_size_kb": -1,
+        "max_objects": -1
+    },
+    "temp_url_keys": []
+}
+```
+给网关用户授权
+```
+docker exec -ti 4a7c507a40b5 radosgw-admin  caps add –uid=admin –caps="users=*;buckets=*;metadata=*;usage=*;zone=*"
+```
+
+## 6.5 启动PAAS-CEPH-WRAPPER
+```
+docker run -d \
+    -p 9080:8080 \
+    -v /etc/ceph:/etc/ceph \
+    10.26.7.81:5000/newtouchone/paas-ceph-wrapper:20161013
+```
+*（注：该应用为PAAS调用ceph接口做的转发器）*
+镜像说明：对newtouch-paas/paas-system-wrapper项目进行打包（profile=boot），并将jar包放入Dockerfile（newtouch-paas/file/docker/paas-ceph-wrapper）中进行打包。
+
+## 6.6 状态检查
+
+进入paas-ceph-wrapper容器，执行命令检查ceph服务健康状态
+```
+ceph status
+```
+
 
