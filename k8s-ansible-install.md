@@ -10,6 +10,7 @@ node3|172.21.7.14||
 ```
 hostnamectl set-hostname <hostname>
 ```
+设置完reboot服务器
 ## 1.2 免密登陆配置
 ### 1.2.1 修改hosts文件
 ```
@@ -129,7 +130,19 @@ registry安装后上传镜像到路径
 |registry中镜像有|
 |----|
 |v4-zookeeper:3.4.9|
+## 5.1 v4-zookeeper镜像上传
+上传v4-zookeeper:3.4.9.tar到/root/registry下
+```
+#docker导入镜像
+docker load < v4-zookeeper\:3.4.9.tar 
+#重现tag镜像
+docker tag newtouchone/v4-zookeeper\:3.4.9 172.21.7.11:5000/newtouchone/v4-zookeeper\:3.4.9
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX未完成XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+```
+## 5.2 zookeeper安装
 zookeeper是在node上浮动的，所以安装在任意节点即可
 在任意节点创建zk-deployment
 修改以下配置中的：
@@ -139,7 +152,7 @@ namespace|
 node|为部署节点
 创建并启动namespace
 ```
-vi one-zk-deployment.yaml
+vi one-namespace.yaml
 ```
 ```
 apiVersion: v1  
@@ -168,12 +181,12 @@ spec:
     metadata:
       labels:
         app: zookeeper
-        node: 10.26.7.85
+        node: 172.21.7.11
     spec:
       hostname: zookeeper
       containers:
       - name: zookeeper
-        image: 10.26.7.81:5000/newtouchone/v4-zookeeper:3.4.9 
+        image: 172.21.7.11:5000/newtouchone/v4-zookeeper:3.4.9 
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 2181
