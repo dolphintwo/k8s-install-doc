@@ -136,12 +136,14 @@ registry安装后上传镜像到路径
 #docker导入镜像
 docker load < v4-zookeeper\:3.4.9.tar 
 #重现tag镜像
-docker tag newtouchone/v4-zookeeper\:3.4.9 172.21.7.11:5000/newtouchone/v4-zookeeper\:3.4.9
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX未完成XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
+docker tag 192.168.0.8:5000/newtouchone/v4-zookeeper:3.4.9 172.21.7.11:5000/newtouchone/v4-zookeeper:3.4.9
+#删除旧镜像
+docker rmi 192.168.0.8:5000/newtouchone/v4-zookeeper:3.4.9
+#push镜像
+docker push 172.21.7.11:5000/newtouchone/v4-zookeeper:3.4.9
 ```
+*校验：/var/lib/docker/volumes/ff4ef67dd83019202083b0955ddef7493f68e94f0b65934c2c937698bedf2611/_data/docker/registry/v2/repositories/newtouchone下出现v4-zookeeper*
+*校验2：docker pull 172.21.7.11:5000/newtouchone/v4-zookeeper:3.4.9*
 ## 5.2 zookeeper安装
 zookeeper是在node上浮动的，所以安装在任意节点即可
 在任意节点创建zk-deployment
@@ -163,7 +165,8 @@ metadata:
      name: newtouchone
 ```
 ```
-kubectl create -f one-namespace.yml
+>kubectl create -f one-namespace.yaml
+namespace "newtouchone" created
 ```
 创建并启动deployment
 ```
@@ -193,7 +196,8 @@ spec:
 ```
 
 ```
-kubectl create -f one-zk-deployment.yaml
+>kubectl create -f one-zk-deployment.yaml
+deployment "zookeeper" created
 ```
 创建并启动zk-service
 ```
@@ -215,7 +219,8 @@ spec:
   -port: 2181 
 ```
 ```
-kubectl create -f one-zk-service.yaml
+>kubectl create -f one-zk-service.yaml
+service "zookeeper" created
 ```
 # 6. 安装ceph
 
