@@ -222,6 +222,7 @@ spec:
 >kubectl create -f one-zk-service.yaml
 service "zookeeper" created
 ```
+============================下方未验证============================
 # 6. 安装ceph
 
 前置环境检验
