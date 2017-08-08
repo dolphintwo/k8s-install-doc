@@ -4,7 +4,7 @@
 
 - [由浅入深学习docker](#由浅入深学习docker)
     - [1 简介](#1-简介)
-        - [为什么要使用docker（优势）](#为什么要使用docker优势)
+        - [为什么要使用docker（优势）](#为什么要使用docker（优势）)
             - [更快的交付和部署](#更快的交付和部署)
             - [更高效的虚拟化](#更高效的虚拟化)
             - [更轻松的迁移和扩展](#更轻松的迁移和扩展)
@@ -76,7 +76,7 @@
             - [查看映射端口配置](#查看映射端口配置)
         - [容器互联](#容器互联)
             - [自定义容器命名](#自定义容器命名)
-            - [容器互联](#容器互联-1)
+            - [容器互联](#容器互联)
     - [9 高级网络配置](#9-高级网络配置)
         - [快速配置指南](#快速配置指南)
         - [配置DNS](#配置dns)
@@ -92,18 +92,18 @@
             - [pipework](#pipework)
             - [playground](#playground)
         - [编辑网络配置文件](#编辑网络配置文件)
-        - [示例：创建一个点到点连接](#示例创建一个点到点连接)
+        - [示例：创建一个点到点连接](#示例：创建一个点到点连接)
     - [10 实战案例](#10-实战案例)
         - [使用 Supervisor 来管理进程](#使用-supervisor-来管理进程)
             - [配置](#配置)
-            - [安装ssh、apache和supervisor](#安装sshapache和supervisor)
+            - [安装ssh、apache和supervisor](#安装ssh、apache和supervisor)
             - [supervisor配置文件内容](#supervisor配置文件内容)
             - [使用方法](#使用方法)
         - [创建tomcat/weblogic集群](#创建tomcatweblogic集群)
             - [安装tomcat镜像](#安装tomcat镜像)
             - [安装weblogic镜像](#安装weblogic镜像)
             - [tomcat/weblogic镜像的使用](#tomcatweblogic镜像的使用)
-        - [多台物理主机之间的容器互联（暴露容器到真实网络中）](#多台物理主机之间的容器互联暴露容器到真实网络中)
+        - [多台物理主机之间的容器互联（暴露容器到真实网络中）](#多台物理主机之间的容器互联（暴露容器到真实网络中）)
             - [拓扑图](#拓扑图)
             - [ubuntu示例](#ubuntu示例)
         - [标准化开发测试和生产环境](#标准化开发测试和生产环境)
@@ -172,11 +172,62 @@ docker pull <image_name:tag>
 docker pull <{registry_addr/}image_name:tag>
 ```
 ### 列出本地镜像
+使用<code>docker images</code>显示本地已有的镜像。
+```
+$ docker images
+REPOSITORY                    TAG                 IMAGE ID            CREATED          SIZE
+learn/ping                    latest              2e2c20c94479        6 hours ago         139MB
+tomcat                        latest              7856f1f03e2d        2 weeks ago         292MB
+selenium/node-firefox         latest              39b948f7c88f        5 weeks ago         631MB
+selenium/node-chrome          latest              dd16d697dff6        5 weeks ago         835MB
+selenium/hub                  latest              d3dc44f1ed52        5 weeks ago         292MB
+hello-world                   latest              1815c82652c0        7 weeks ago         1.84kB
+kitematic/hello-world-nginx   latest              03b4557ad7b9        2 years ago         7.91MB
+learn/tutorial                latest              a7876479f1aa        4 years ago         128MB
+```
+会列出如下字段信息
+* 来自于哪个仓库
+* 镜像的标记 TAG信息用来标记来自同一个仓库的不同镜像，如果不指定具体的标记，则默认使用 latest 标记信息。
+* 镜像ID 镜像的 ID 唯一标识了镜像
+* 创建时间
+* 镜像大小
 
 ### 创建镜像
+可以从 Docker Hub 获取已有镜像并更新，也可以利用本地文件系统创建一个。
 #### 修改已有镜像
+先使用下载的镜像启动容器
+```
+docker run -t -i <REPOSITORY> <command> 
+```
+作出修改后发现ID变化
+```
+docker commit -m "msg" -a "author" <ID> <new REPOSITORY name>
+```
+使用docker images查看新创建的镜像。
+```
+docker images
+```
 #### 利用Dockerfile来创建镜像
+使用<code>docker commit</code>来扩展一个镜像比较简单，但是不方便在团队中分享，可以使用<code>docker build</code>来创建一个新的镜像。为此，首先需要创建一个Dockerfile。
+新建一个目录和一个Dockerfile
+```
+$ mkdir test
+$ cd test
+$ touch Dockerfile
+$ vi Dockerfile
+
+# This is a comment
+# FROM指令告诉Docker使用那个镜像作为基础
+FROM ubuntu:14.04
+# 维护者信息
+MAINTAINER Docker Newbee <newbee@docker.com>
+RUN apt-get -qq update
+RUN apt-get -qqy install ruby ruby-dev
+RUN gem install sinatra
+```
+编写完成Dockerfile后使用<code>docker build</code>来生成镜像。
 #### 从本地文件系统导入
+
 #### 上传镜像
 
 ### 存出和载入镜像
