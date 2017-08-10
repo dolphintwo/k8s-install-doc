@@ -259,17 +259,60 @@ SECURITY WARNING: You are building a Docker image from Windows against a non-Win
 ```
 
 #### 从本地文件系统导入
-
+要从本地文件系统导入一个镜像，可以使用openvz的模板来创建：openvz的模板现在地址为[templates（特别卡）](https://openvz.org/Download/template/precreated)
+比如先下载一个ubuntu-14.04的镜像，之后使用以下命令导入：
+```
+sudo cat ubuntu-14.04-x86_64-minimal.tar.gz |docker import - ubuntu:14.04
+```
+然后通过<code>docker images</code>查看导入的镜像。
 #### 上传镜像
+用户可以通过<code>docker push</code>命令吧自己创建的镜像上传到仓库中来共享。
 
 ### 存出和载入镜像
 #### 存出镜像
+如果要导出镜像到本地文件，可以使用<code>docker save</code>命令。
+```
+$ docker images
+REPOSITORY                    TAG                 IMAGE ID            CREATED          SIZE
+centos                        latest              328edcd84f1b        6 days ago          193MB
+tomcat                        latest              7856f1f03e2d        2 weeks ago         292MB
+#导出镜像到当前路径
+$ docker save -o centos_latest.tar centos:latest
+```
 #### 载入镜像
+可以使用<code>docker load</code>从本地文件导入到本地镜像库
+```
+$ docker rmi centos
+Untagged: centos:latest
+Untagged: centos@sha256:26f74cefad82967f97f3eeeef88c1b6262f9b42bc96f2ad61d6f3fdf544759b8
+Deleted: sha256:328edcd84f1bbf868bc88e4ae37afe421ef19be71890f59b4b2d8ba48414b84d
+Deleted: sha256:b362758f4793674edb79ec5c7192074b2eacf200c006e127069856484526ccf2
 
+$ docker load --input centos_latest.tar
+#$ docker load < centos_latest.tar
+b362758f4793: Loading layer  200.1MB/200.1MB
+Loaded image: centos:latest
+
+$ docker images
+REPOSITORY                    TAG                 IMAGE ID            CREATED          SIZE
+centos                        latest              328edcd84f1b        6 days ago          193MB
+```
 ### 移除本地镜像
-
+如果要移除本地的镜像，可以使用<code>docker rmi</code>命令。注意<code>docker rm</code>命令是移除容器。
+```
+$ docker rmi centos
+Untagged: centos:latest
+Untagged: centos@sha256:26f74cefad82967f97f3eeeef88c1b6262f9b42bc96f2ad61d6f3fdf544759b8
+Deleted: sha256:328edcd84f1bbf868bc88e4ae37afe421ef19be71890f59b4b2d8ba48414b84d
+Deleted: sha256:b362758f4793674edb79ec5c7192074b2eacf200c006e127069856484526ccf2
+```
+*注意：在删除镜像之前要先用docker rm删除依赖与整个镜像的所有容器*
 ### 镜像的实现原理
-
+每个镜像都由很多层次构成，Docker使用Union FS将这些不同的层结合到一个镜像中去。
+通常Union FS有两个用途：
+* 可以实现不借助LVM、RAID将多个disk挂到同一个目录
+* 可以将一个只读分支和一个可写分支联合在一起
+Live CD 正是基于此方法可以运行在镜像不变的基础上允许用户在其上进行一些写操作。Docker 在 AUFS 上构建的容器也是利用了类似的原理。
 ## 5 Docker容器
 ### 启动容器
 #### 新建并启动
