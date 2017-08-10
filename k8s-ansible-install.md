@@ -54,6 +54,7 @@ The key's randomart image is:
 ```
 *验证从ansible安装机到被安装机免密登陆*
 # 2.内核升级
+*验证内核版本*
 
 # 3.磁盘挂载
 
@@ -76,6 +77,7 @@ sh download_dependence.sh
 ## 4.3 配置工程hosts文件
 修改etcd,master,node节点信息
 ```
+#以最新文件为准
 [etcdservers]
 etcd0 ansible_host=<node1.ip> ansible_port=22 etcd_master=true
 etcd1 ansible_host=<node2.ip> ansible_port=22
@@ -114,6 +116,20 @@ ansible-playbook -i hosts install_k8s_master.yml
 ansible-playbook -i hosts install_k8s_node.yml
 ansible-playbook -i hosts install_registry.yml
 ansible-playbook -i hosts install_k8s_addon.yml
+ansible-playbook -i hosts install_ceph.yml
+ansible-playbook -i hosts install_one_components.yml
+
+```
+
+
+
+删除addon安装
+登陆到master节点
+```
+cd kube_addon
+kubectl delete -f dashboard/
+kubectl delete -f dns/
+kubectl delete -f heapster/
 ```
 *每一步执行都查看是否报错，ansible安装出错执行回滚*
 ```
@@ -223,7 +239,10 @@ spec:
 service "zookeeper" created
 ```
 ============================下方未验证============================
-# 6. 安装ceph
+# 6. 安装proxy
+172.21.7.11:5000/newtouchone/one-nginx:1.0
+
+# 7. 安装ceph
 
 前置环境检验
 
@@ -232,7 +251,9 @@ service "zookeeper" created
 |ceph-daemon_latest|
 |paas-ceph-wrapper_20161013|
 
-## 6.1 启动MONITOER
+*ceph挂载点为xfs格式*
+
+## 7.1 启动MONITOER
 修改以下配置中的：（下同）
 |参数|备注|
 |------|------|
@@ -246,7 +267,7 @@ docker run -d \
 -v /var/lib/ceph/:/var/lib/ceph/ \
 -e MON_IP=10.26.7.86 \
 -e CEPH_PUBLIC_NETWORK=10.26.7.1/16 \
-10.26.7.81:5000/newtouchone/ceph-daemon mon
+172.21.7.11:5000/newtouchone/ceph-daemon mon
 ```
 这里因为是单点部署，需要在CEPH配置文件（/etc/ceph/ceph.conf）添加以下参数
 ```
@@ -261,17 +282,17 @@ osd crush chooseleaf type = 0
 docker restart {MONITOER容器ID}
 ```
 
-## 6.2 启动MDS
+## 7.2 启动MDS
 ```
 docker run -d \
     –net=host \
     -v /etc/ceph:/etc/ceph \
     -v /var/lib/ceph/:/var/lib/ceph/ \
     -e CEPHFS_CREATE=1 \
-    10.26.7.81:5000/newtouchone/ceph-daemon mds
+    172.21.7.11:5000/newtouchone/ceph-daemon mds
 ```
 
-## 6.3 启动ODS
+## 7.3 启动ODS
 ```
 docker run -d \
     –net=host \
@@ -280,11 +301,11 @@ docker run -d \
     -v /var/lib/ceph/:/var/lib/ceph/ \
     -v /dev/:/dev/ \
     -v /ceph:/var/lib/ceph/osd \
-    10.26.7.81:5000/newtouchone/ceph-daemon osd_directory
+    172.21.7.11:5000/newtouchone/ceph-daemon osd_directory
 ```
 *（注：挂载到/var/lib/ceph/osd的目录为实际数据盘存储目录，目录格式必须为xfs格式，一般使用物理机挂载的磁盘目录，例如物理机挂载500G磁盘至/ceph目录，那么这里volume的参数则设置为 -v /ceph:/var/lib/ceph/osd。ODS可根据磁盘容量需要，挂载多个磁盘）*
 
-## 6.4 启动RGW
+## 7.4 启动RGW
 ```
 docker run -d \
  –net=host \
@@ -292,7 +313,7 @@ docker run -d \
  -v /etc/ceph:/etc/ceph \
  -v /var/lib/ceph/:/var/lib/ceph/ \
  -e RGW_CIVETWEB_PORT=7480 \
- 10.26.7.81:5000/newtouchone/ceph-daemon rgw
+ 172.21.7.11:5000/newtouchone/ceph-daemon rgw
 #结果显示如下
 4a7c507a40b5f2514a6e20b518679e1b877c238d1400a44ac38934e79e4d3d6d
 #添加网关用户
@@ -336,17 +357,17 @@ docker exec -ti 4a7c507a40b5 radosgw-admin user create –uid="admin" –display
 docker exec -ti 4a7c507a40b5 radosgw-admin  caps add –uid=admin –caps="users=*;buckets=*;metadata=*;usage=*;zone=*"
 ```
 
-## 6.5 启动PAAS-CEPH-WRAPPER
+## 7.5 启动PAAS-CEPH-WRAPPER
 ```
 docker run -d \
     -p 9080:8080 \
     -v /etc/ceph:/etc/ceph \
-    10.26.7.81:5000/newtouchone/paas-ceph-wrapper:20161013
+    172.21.7.11:5000/newtouchone/paas-ceph-wrapper:20161013
 ```
 *（注：该应用为PAAS调用ceph接口做的转发器）*
 镜像说明：对newtouch-paas/paas-system-wrapper项目进行打包（profile=boot），并将jar包放入Dockerfile（newtouch-paas/file/docker/paas-ceph-wrapper）中进行打包。
 
-## 6.6 状态检查
+## 7.6 状态检查
 
 进入paas-ceph-wrapper容器，执行命令检查ceph服务健康状态
 ```

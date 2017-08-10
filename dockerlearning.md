@@ -220,12 +220,44 @@ $ vi Dockerfile
 # FROM指令告诉Docker使用那个镜像作为基础
 FROM ubuntu:14.04
 # 维护者信息
-MAINTAINER Docker Newbee <newbee@docker.com>
-RUN apt-get -qq update
-RUN apt-get -qqy install ruby ruby-dev
-RUN gem install sinatra
+MAINTAINER Docker dolphintwo dtdinghui@126.com
+RUN apt-get -y install ping
 ```
+
 编写完成Dockerfile后使用<code>docker build</code>来生成镜像。
+```
+$ docker build -t="learn/ping:latest" .
+Sending build context to Docker daemon  2.048kB
+Step 1/3 : FROM learn/tutorial:latest
+ ---> a7876479f1aa
+Step 2/3 : MAINTAINER Docker dolphintwo dtdinghui@126.com
+ ---> Running in e83161ca0a37
+ ---> 37b0ff542776
+Removing intermediate container e83161ca0a37
+Step 3/3 : RUN apt-get -y install ping
+ ---> Running in b56636abab94
+Reading package lists...
+Building dependency tree...
+The following NEW packages will be installed:
+  iputils-ping
+0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Need to get 56.1 kB of archives.
+After this operation, 143 kB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu/ precise/main iputils-ping amd64 3:20101006-1ubuntu1 [56.1 kB]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 56.1 kB in 4s (12.0 kB/s)
+Selecting previously unselected package iputils-ping.
+(Reading database ... 7545 files and directories currently installed.)
+Unpacking iputils-ping (from .../iputils-ping_3%3a20101006-1ubuntu1_amd64.deb) .
+..
+Setting up iputils-ping (3:20101006-1ubuntu1) ...
+ ---> cbd1e053c743
+Removing intermediate container b56636abab94
+Successfully built cbd1e053c743
+Successfully tagged learn/ping:latest
+SECURITY WARNING: You are building a Docker image from Windows against a non-Windows Docker host. All files and directories added to build context will have '-rwxr-xr-x' permissions. It is recommended to double check and reset permissions for sensitive files and directories.
+```
+
 #### 从本地文件系统导入
 
 #### 上传镜像
