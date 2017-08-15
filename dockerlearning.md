@@ -121,12 +121,12 @@ docker几乎可以在任何地方运行，这种兼容性可以让用户吧程�
 #### 简单的管理
 所有修改都以增量方式被分发和更新，从而实现自动化并且高效管理。
 #### 和传统虚拟机对比总结
-|特性|容器|虚拟机|
-|----|----|----|
-|启动|秒级|分钟级|
-|磁盘使用|一般为MB|一般为GB|
-|性能|接近原生|弱|
-|系统支持|单机支持上千|一般几十个|
+| 特性     | 容器         | 虚拟机     |
+| -------- | ------------ | ---------- |
+| 启动     | 秒级         | 分钟级     |
+| 磁盘使用 | 一般为MB     | 一般为GB   |
+| 性能     | 接近原生     | 弱         |
+| 系统支持 | 单机支持上千 | 一般几十个 |
 
 Docker 包括三个基本概念
 * 镜像（Image）
@@ -343,10 +343,49 @@ root@localhost:/#
 
 #### 启动已终止的容器
 <code>docker start</code>
+容器核心所执行的应用程序，所需要的资源都是应用程序运行所必需的。除此之外，并没有其他的资源。可以在伪终端中使用<code>ps</code>或者<code>top</code>查看进场信息。
+```
+$ docker run -t -i ubuntu:latest /bin/bash
 
+root@503cda4ec740:/# ps
+  PID TTY          TIME CMD
+    1 pts/0    00:00:00 bash
+  200 pts/0    00:00:00 ps
+```
+容器中仅运行了指定的bash应用。这种特点使得Docker对资源的利用率极高。
 ### 守护态运行
+更多的时候需要让Docker容器在后台以守护态（Deamonized）形式运行。，可以通过添加<code>-d</code>参数来实现。
+```
+$ docker run -d ubuntu:latest /bin/sh -c "while true; do echo hello world; sleep 1; done"
+efd9674156095d0ebebb82fd565c0f4c53e7ccc04dd36211b1b0cc153a606634
+
+$ docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED     STATUS              PORTS               NAMES
+efd967415609        ubuntu:latest       "/bin/sh -c 'while..."   4 seconds ago     Up 5 seconds                            friendly_brattain
+//获取容器的输出信息，通过docker logs命令查看
+$ docker logs friendly_brattain
+hello world
+hello world
+hello world
+hello world
+hello world
+```
 ### 终止容器额
+可以使用 docker stop 来终止一个运行中的容器。
+
+此外，当Docker容器中指定的应用终结时，容器也自动终止。 例如对于上一章节中只启动了一个终端的容器，用户通过 exit 命令或 Ctrl+d 来退出终端时，所创建的容器立刻终止。
+
+终止状态的容器可以用<code>docker ps -a</code>命令看到
+```
+$ docker stop efd
+efd
+
+$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED           STATUS                        PORTS               NAMES
+efd967415609        ubuntu:latest       "/bin/sh -c 'while..."   6 minutes ago     Exited (137) 9 seconds ago                friendly_brattain
+```
 ### 进入容器
+在使用-d参数时，容器启动后会进入后台。某些时候需要进入容器进行操作，很多种方法，包括使用<code>docker attach</code>命令或<code>nsenter</code>工具等。
 #### attach
 #### nsenter
 ### 导出和导入容器
