@@ -381,15 +381,33 @@ $ docker stop efd
 efd
 
 $ docker ps -a
-CONTAINER ID        IMAGE               COMMAND                  CREATED           STATUS                        PORTS               NAMES
-efd967415609        ubuntu:latest       "/bin/sh -c 'while..."   6 minutes ago     Exited (137) 9 seconds ago                friendly_brattain
+CONTAINER ID    IMAGE           COMMAND                  CREATED           STATUS                        PORTS      NAMES
+efd967415609    ubuntu:latest   "/bin/sh -c 'while..."   6 minutes ago     Exited (137) 9 seconds ago           friendly_brattain
 ```
 ### 进入容器
 在使用-d参数时，容器启动后会进入后台。某些时候需要进入容器进行操作，很多种方法，包括使用<code>docker attach</code>命令或<code>nsenter</code>工具等。
 #### attach
+<code>docker attach</code>是docker自带的命令
+```
+$ docker ps -a
+CONTAINER ID    IMAGE   COMMAND         CREATED             STATUS          PORTS       NAMES
+6dd2d2aadc1a    ubuntu  "/bin/bash"     3 seconds ago       Up 3 seconds            peaceful_ramanujan
+
+$ docker attach peaceful_ramanujan
+root@6dd2d2aadc1a:/#
+```
 #### nsenter
+**暂时略过**
 ### 导出和导入容器
+
 #### 导出容器
+```
+$ docker ps -a
+CONTAINER ID    IMAGE   COMMAND      CREATED            STATUS                      PORTS   NAMES
+6dd2d2aadc1a    ubuntu  "/bin/bash" 19 minutes ago      Exited (0) 6 seconds ago            peaceful_ramanujan
+
+$ docker export 6dd > ubuntu.tar
+```
 #### 导入容器快照
 ### 删除容器
 
