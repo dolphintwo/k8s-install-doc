@@ -112,7 +112,7 @@ docker pull <image_name:tag>
 docker pull <{registry_addr/}image_name:tag>
 ```
 ### 列出本地镜像
-使用<code>docker images</code>显示本地已有的镜像。
+使用`docker images`显示本地已有的镜像。
 ```
 $ docker images
 REPOSITORY                    TAG                 IMAGE ID            CREATED          SIZE
@@ -148,7 +148,7 @@ docker commit -m "msg" -a "author" <ID> <new REPOSITORY name>
 docker images
 ```
 #### 利用Dockerfile来创建镜像
-使用<code>docker commit</code>来扩展一个镜像比较简单，但是不方便在团队中分享，可以使用<code>docker build</code>来创建一个新的镜像。为此，首先需要创建一个Dockerfile。
+使用`docker commit`来扩展一个镜像比较简单，但是不方便在团队中分享，可以使用`docker build`来创建一个新的镜像。为此，首先需要创建一个Dockerfile。
 新建一个目录和一个Dockerfile
 ```
 $ mkdir test
@@ -164,7 +164,7 @@ MAINTAINER Docker dolphintwo dtdinghui@126.com
 RUN apt-get -y install ping
 ```
 
-编写完成Dockerfile后使用<code>docker build</code>来生成镜像。
+编写完成Dockerfile后使用`docker build`来生成镜像。
 ```
 $ docker build -t="learn/ping:latest" .
 Sending build context to Docker daemon  2.048kB
@@ -204,13 +204,13 @@ SECURITY WARNING: You are building a Docker image from Windows against a non-Win
 ```
 sudo cat ubuntu-14.04-x86_64-minimal.tar.gz |docker import - ubuntu:14.04
 ```
-然后通过<code>docker images</code>查看导入的镜像。
+然后通过`docker images`查看导入的镜像。
 #### 上传镜像
-用户可以通过<code>docker push</code>命令吧自己创建的镜像上传到仓库中来共享。
+用户可以通过`docker push`命令吧自己创建的镜像上传到仓库中来共享。
 
 ### 存出和载入镜像
 #### 存出镜像
-如果要导出镜像到本地文件，可以使用<code>docker save</code>命令。
+如果要导出镜像到本地文件，可以使用`docker save`命令。
 ```
 $ docker images
 REPOSITORY                    TAG                 IMAGE ID            CREATED          SIZE
@@ -220,7 +220,7 @@ tomcat                        latest              7856f1f03e2d        2 weeks ag
 $ docker save -o centos_latest.tar centos:latest
 ```
 #### 载入镜像
-可以使用<code>docker load</code>从本地文件导入到本地镜像库
+可以使用`docker load`从本地文件导入到本地镜像库
 ```
 $ docker rmi centos
 Untagged: centos:latest
@@ -238,7 +238,7 @@ REPOSITORY                    TAG                 IMAGE ID            CREATED   
 centos                        latest              328edcd84f1b        6 days ago          193MB
 ```
 ### 移除本地镜像
-如果要移除本地的镜像，可以使用<code>docker rmi</code>命令。注意<code>docker rm</code>命令是移除容器。
+如果要移除本地的镜像，可以使用`docker rmi`命令。注意`docker rm`命令是移除容器。
 ```
 $ docker rmi centos
 Untagged: centos:latest
@@ -258,7 +258,7 @@ Live CD 正是基于此方法可以运行在镜像不变的基础上允许用户
 ### 启动容器
 启动容器有两种方式，一种是基于镜像新建一个容器并启动，另外一个是将在终止状态（stopped）的容器重新启动。因为容器比较轻量，所以，大部分时候用户都是随时删除和新创建容器的。
 #### 新建并启动
-<code>docker run</code>
+`docker run`
 启动一个容器输出一个'hello world'，之后终止容器。
 ```
 $ docker run ubuntu:14.04 /bin/echo 'hello world'
@@ -272,7 +272,7 @@ root@localhost:/#
 其中 -t 让docker分配一个伪终端(pseudo-tty)并绑定到容器的标准输入上
 -i 则让容器的标准输入保持打开。
 
-当使用<code>docker run</code>来创建容器时，docker在后台的标准操作包括：
+当使用`docker run`来创建容器时，docker在后台的标准操作包括：
 - 检查本地是否存在指定的镜像，不存在就从共有仓库下载 
 - 利用镜像创建并启动一个容器
 - 分配一个文件系统，并在只读的镜像层外面挂载一层可读写层
@@ -282,8 +282,8 @@ root@localhost:/#
 - 执行完毕后容器被终止
 
 #### 启动已终止的容器
-<code>docker start</code>
-容器核心所执行的应用程序，所需要的资源都是应用程序运行所必需的。除此之外，并没有其他的资源。可以在伪终端中使用<code>ps</code>或者<code>top</code>查看进场信息。
+`docker start`
+容器核心所执行的应用程序，所需要的资源都是应用程序运行所必需的。除此之外，并没有其他的资源。可以在伪终端中使用`ps`或者`top`查看进场信息。
 ```
 $ docker run -t -i ubuntu:latest /bin/bash
 
@@ -294,7 +294,7 @@ root@503cda4ec740:/# ps
 ```
 容器中仅运行了指定的bash应用。这种特点使得Docker对资源的利用率极高。
 ### 守护态运行
-更多的时候需要让Docker容器在后台以守护态（Deamonized）形式运行。，可以通过添加<code>-d</code>参数来实现。
+更多的时候需要让Docker容器在后台以守护态（Deamonized）形式运行。，可以通过添加`-d`参数来实现。
 ```
 $ docker run -d ubuntu:latest /bin/sh -c "while true; do echo hello world; sleep 1; done"
 efd9674156095d0ebebb82fd565c0f4c53e7ccc04dd36211b1b0cc153a606634
@@ -315,7 +315,7 @@ hello world
 
 此外，当Docker容器中指定的应用终结时，容器也自动终止。 例如对于上一章节中只启动了一个终端的容器，用户通过 exit 命令或 Ctrl+d 来退出终端时，所创建的容器立刻终止。
 
-终止状态的容器可以用<code>docker ps -a</code>命令看到
+终止状态的容器可以用`docker ps -a`命令看到
 ```
 $ docker stop efd
 efd
@@ -325,9 +325,9 @@ CONTAINER ID    IMAGE           COMMAND                  CREATED           STATU
 efd967415609    ubuntu:latest   "/bin/sh -c 'while..."   6 minutes ago     Exited (137) 9 seconds ago           friendly_brattain
 ```
 ### 进入容器
-在使用-d参数时，容器启动后会进入后台。某些时候需要进入容器进行操作，很多种方法，包括使用<code>docker attach</code>命令或<code>nsenter</code>工具等。
+在使用-d参数时，容器启动后会进入后台。某些时候需要进入容器进行操作，很多种方法，包括使用`docker attach`命令或`nsenter`工具等。
 #### attach
-<code>docker attach</code>是docker自带的命令
+`docker attach`是docker自带的命令
 ```
 $ docker ps -a
 CONTAINER ID    IMAGE   COMMAND         CREATED             STATUS          PORTS       NAMES
@@ -349,12 +349,12 @@ CONTAINER ID    IMAGE   COMMAND      CREATED            STATUS                  
 $ docker export 6dd > ubuntu.tar
 ```
 #### 导入容器快照
-<code>docker import [OPTIONS] file|URL|- [REPOSITORY[:TAG]]</code>
+`docker import [OPTIONS] file|URL|- [REPOSITORY[:TAG]]`
 
 用户既可以使用 docker load 来导入镜像存储文件到本地镜像库，也可以使用 docker import 来导入一个容器快照到本地镜像库。这两者的区别在于容器快照文件将丢弃所有的历史记录和元数据信息（即仅保存容器当时的快照状态），而镜像存储文件将保存完整记录，体积也要大。此外，从容器快照文件导入时可以重新指定标签等元数据信息。
 ### 删除容器
-<code>docker rm [OPTIONS] CONTAINER [CONTAINER...]</code>
+`docker rm [OPTIONS] CONTAINER [CONTAINER...]`
 
-删除运行中的容器可以添加<code>-f</code>参数
+删除运行中的容器可以添加`-f`参数
 
 **注意区分rmi和rm**

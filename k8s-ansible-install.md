@@ -241,137 +241,295 @@ service "zookeeper" created
 ============================下方未验证============================
 # 6. 安装proxy
 172.21.7.11:5000/newtouchone/one-nginx:1.0
-
+++++问题++++
 # 7. 安装ceph
 
-前置环境检验
+ceph采用ansible安装，安装前需要将文件系统格式化成xfs
 
-|registry中镜像有|
-|-----|
-|ceph-daemon_latest|
-|paas-ceph-wrapper_20161013|
-
-*ceph挂载点为xfs格式*
-
-## 7.1 启动MONITOER
-修改以下配置中的：（下同）
-|参数|备注|
-|------|------|
-|IP地址|镜像仓库地址|
-
-```
-docker run -d \
-–net=host \
-–restart always \
--v /etc/ceph:/etc/ceph \
--v /var/lib/ceph/:/var/lib/ceph/ \
--e MON_IP=10.26.7.86 \
--e CEPH_PUBLIC_NETWORK=10.26.7.1/16 \
-172.21.7.11:5000/newtouchone/ceph-daemon mon
-```
-这里因为是单点部署，需要在CEPH配置文件（/etc/ceph/ceph.conf）添加以下参数
-```
-echo "
-osd pool default size = 1
-osd pool default min size = 1
-osd crush chooseleaf type = 0
-" >> /etc/ceph/ceph.conf
-```
-重启容器
-```
-docker restart {MONITOER容器ID}
-```
-
-## 7.2 启动MDS
-```
-docker run -d \
-    –net=host \
-    -v /etc/ceph:/etc/ceph \
-    -v /var/lib/ceph/:/var/lib/ceph/ \
-    -e CEPHFS_CREATE=1 \
-    172.21.7.11:5000/newtouchone/ceph-daemon mds
-```
-
-## 7.3 启动ODS
-```
-docker run -d \
-    –net=host \
-    –privileged=true \
-    -v /etc/ceph:/etc/ceph \
-    -v /var/lib/ceph/:/var/lib/ceph/ \
-    -v /dev/:/dev/ \
-    -v /ceph:/var/lib/ceph/osd \
-    172.21.7.11:5000/newtouchone/ceph-daemon osd_directory
-```
-*（注：挂载到/var/lib/ceph/osd的目录为实际数据盘存储目录，目录格式必须为xfs格式，一般使用物理机挂载的磁盘目录，例如物理机挂载500G磁盘至/ceph目录，那么这里volume的参数则设置为 -v /ceph:/var/lib/ceph/osd。ODS可根据磁盘容量需要，挂载多个磁盘）*
-
-## 7.4 启动RGW
-```
-docker run -d \
- –net=host \
- –restart always \
- -v /etc/ceph:/etc/ceph \
- -v /var/lib/ceph/:/var/lib/ceph/ \
- -e RGW_CIVETWEB_PORT=7480 \
- 172.21.7.11:5000/newtouchone/ceph-daemon rgw
-#结果显示如下
-4a7c507a40b5f2514a6e20b518679e1b877c238d1400a44ac38934e79e4d3d6d
-#添加网关用户
-docker exec -ti 4a7c507a40b5 radosgw-admin user create –uid="admin" –display-name="admin"
-#结果显示如下
-{
-    "user_id": "admin",
-    "display_name": "admin",
-    "email": "",
-    "suspended": 0,
-    "max_buckets": 1000,
-    "auid": 0,
-    "subusers": [],
-    "keys": [
-        {
-            "user": "admin",
-            "access_key": "P8JUQ0E22YHSMC3G4Y1D",
-            "secret_key": "kt2RS5CwFug28siGwOPZBAIVJDnmaLfTj5jEK36W"
-        }
-    ],
-    "swift_keys": [],
-    "caps": [],
-    "op_mask": "read, write, delete",
-    "default_placement": "",
-    "placement_tags": [],
-    "bucket_quota": {
-        "enabled": false,
-        "max_size_kb": -1,
-        "max_objects": -1
-    },
-    "user_quota": {
-        "enabled": false,
-        "max_size_kb": -1,
-        "max_objects": -1
-    },
-    "temp_url_keys": []
-}
-```
-给网关用户授权
-```
-docker exec -ti 4a7c507a40b5 radosgw-admin  caps add –uid=admin –caps="users=*;buckets=*;metadata=*;usage=*;zone=*"
-```
-
-## 7.5 启动PAAS-CEPH-WRAPPER
-```
-docker run -d \
-    -p 9080:8080 \
-    -v /etc/ceph:/etc/ceph \
-    172.21.7.11:5000/newtouchone/paas-ceph-wrapper:20161013
-```
-*（注：该应用为PAAS调用ceph接口做的转发器）*
-镜像说明：对newtouch-paas/paas-system-wrapper项目进行打包（profile=boot），并将jar包放入Dockerfile（newtouch-paas/file/docker/paas-ceph-wrapper）中进行打包。
-
-## 7.6 状态检查
+安装完成状态检查：
 
 进入paas-ceph-wrapper容器，执行命令检查ceph服务健康状态
 ```
 ceph status
 ```
+# 8. 部署数据库（ceph）
+## 准备工作：创建Ceph Pool
+在ceph服务端使用下列命令，为Ceph 创建连接池 
+docker ps查看paas-system-wrapper容器ID（可通过COMMAND命令确认，值为/entrypoint.sh osd_d）
+```
+$ ceph osd pool create paas 8 8
+pool 'paas' created
+$ docker ps
+CONTAINER ID        IMAGE                                                     COMMAND                  CREATED            STATUS              PORTS                    NAMES
+a991efc349ce        172.21.7.11:5000/newtouchone/paas-ceph-wrapper:20161013   "java -jar paas-syste"   2 days ago          Up 2 days           0.0.0.0:9080->8080/tcp   ceph-wrapper
+```
+**PS说明:**
+`paas` 连接池pool的名称【默认】
+两个`8`分别为，前`8`为PG数量，后`8`为PGP数量
 
+## 部署mysql
+使用下列命令创建mysql镜像。
+`docker ps`查看paas-system-wrapper容器ID（可通过`COMMAND `命令确认，值为`java -jar paas-syste`）
+```
+$ rbd create mysqlpaas --size 2048 --pool paas
+#重设镜像块大小
+$ rbd resize mysqlpaas --size 4096 --pool paas
+Resizing image: 100% complete...done.
+```
+**PS说明：**
+`mysqlpaas `为镜像名称
+`2048` 为存储大小
+`paas`为准备工作中的连接池名
+- k8s 创建ceph Secret
+> 使用的yaml文件代码；参见：https://git.newtouch.com/newtouch-one/nbo-deploy-resource/blob/master/k8s/cephsecret.yaml
+```
+apiVersion: v1 
+kind: Secret 
+metadata: 
+    name: ceph-secret-newtouch-one 
+    namespace: newtouchone 
+data: 
+    key: QVFCRnVTNVkreFJEQkJBQXlvWE1JNDhlcE9wUmR2TlJJSTFtMmc9PQ==
+```
+**PS说明：**
+`key`的值为ceph用户的key值对应的Base64编码值。
+可在CEPH服务端中的/etc/ceph查看对应用户的密钥。
+此处使用默认用户admin，因此使用/etc/ceph/ceph.client.admin.keyring文件中的key，使用base64加密工具进行加密作为yaml中的key值
+（Base64加密链接：http://tool.chinaz.com/Tools/Base64.aspx）
+- k8s 创建mysql ConfigMap
+> 安装ConfigMap 的yaml文件代码；参见：https://git.newtouch.com/newtouch-one/nbo-deploy-resource/blob/master/k8s/mysql/mysql-configmap.yaml
+```
+apiVersion: v1 
+kind: ConfigMap 
+metadata: 
+    name: mysql-config 
+    namespace: newtouchone
+    labels: 
+    instanceId: paas-mysql 
+    paas: paas 
+data: 
+    my-cnf: |
+        [mysqld] 
+        log-bin=mysql-bin 
+        server-id=1 
+        skip-host-cache 
+        skip-name-resolve 
+        datadir = /var/lib/mysql
+        lower_case_table_names = 1
+        character_set_server = utf8
+        [client]
+        default-character-set = utf8
+        !includedir /etc/mysql/conf.d/
+```
+- k8s 创建RC
+> RC 的yaml文件代码；参见：https://git.newtouch.com/newtouch-one/nbo-deploy-resource/blob/master/k8s/mysql/mysql-rc.yaml
+```
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: paas-mysql
+  namespace: newtouchone
+  labels:
+    instanceId: paas-mysql
+    instanceEngineType: MySQL
+    paas: paas
+spec:
+  replicas: 1
+  selector:
+    instanceId: paas-mysql
+  template:
+    metadata:
+      name: paas-mysql
+      namespace: newtouchone
+      labels:
+        instanceId: paas-mysql
+        instanceEngineType: MySQL
+        paas: paas
+    spec:
+      volumes:
+      - name: rbd-vol
+        rbd:
+          monitors:
+            - 172.28.1.231:6789
+          pool: paas
+          image: mysqlpaas
+          user: admin
+          secretRef:
+              name: ceph-secret-newtouch-one
+          fsType: ext4
+          readOnly: false
+      - name: mysql-config-vol
+        configMap:
+          name: mysql-config
+          items:
+          - key: my-cnf
+            path: my.cnf
+      containers:
+      - name: paas-mysql
+        image: 172.21.7.11:5000/newtouchone/mysql:5.7
+        resources:
+          limits:
+            memory: "1024M"
+            cpu: "1"
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: rbd-vol
+          mountPath: /var/lib/mysql
+        - name: mysql-config-vol
+          mountPath: /mysqlConfig
+        env:
+        - name: FALCON_HOSTNAME
+          value: newtouch-paas-mysql
+        - name: FALCON_HEARTBEAT_URL
+          value: 172.23.64.188:6030
+        - name: FALCON_TRANSFER_URL
+          value: 172.23.64.188:8433
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+        - name: MYSQL_DATABASE
+          value: paas
+        - name: MYSQL_USER
+          value: paas
+        - name: MYSQL_PASSWORD
+          value: paas
+        - name: MYSQL_SERVER_ID
+          value: "1"
+        - name: MYSQL_TYPE
+          value: Primary
+        imagePullPolicy: Always
+      restartPolicy: Always
+```
+    PS说明：
+    spec |_ volumes |_  rbd |_ `monitors`: ceph 服务端地址和端口
+    FALCON_HOSTNAME:open-falcon中显示的节点名 
+    FALCON_HEARTBEAT_URL:open-falcon heartbeat url 
+    FALCON_TRANSFER_URL:open-falcon transfer url 
+    MYSQL_ROOT_PASSWORD:MySQL root账号密码 
+    MYSQL_DATABASE:初始化时创建的数据库名（可选） 
+    MYSQL_USER:初始化时创建的数据库账号（可选） 
+    MYSQL_PASSWORD:初始化时创建的数据库账号密码（可选） 
+    MYSQL_SERVER_ID:默认1 
+    MYSQL_TYPE:默认Primary
+- k8s 创建Service
+> 创建mysql对应的k8s服务；参见：https://git.newtouch.com/newtouch-one/nbo-deploy-resource/blob/master/k8s/mysql/mysql-service.yaml
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: paas-mysql
+  namespace: newtouchone
+  labels:
+    instanceId: paas-mysql
+    paas: paas
+  annotations:
+    kubernetesReverseproxy : '{"hosts":[{"nodePort":31796,"tcp":true}]}'
+spec:
+  selector:
+    instanceId: paas-mysql
+  type: NodePort
+  ports:
+  - port: 3306
+    nodePort: 31796
+```
+## 部署Redis
 
+> 使用下列命令创建mysql镜像
+    > `ssh ceph1`进入ceph服务器，
+    > `docker ps`查看paas-system-wrapper容器ID（可通过`COMMAND `命令确认，值为`java -jar paas-syste`）
+```
+rbd create redispaas --size 2048 --pool paas
+```
+    PS说明：
+    `redispaas `为镜像名称
+    `2048` 为存储大小
+    `paas`为准备工作中的连接池名
+
+- 创建Redis的Replication Controllers
+>Replication Controllers Yaml文件；参见：https://git.newtouch.com/newtouch-one/nbo-deploy-resource/blob/master/k8s/redis/redis-rc.yaml
+```
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: paas-redis
+  namespace: newtouchone
+  labels:
+    instanceId: paas-redis
+    instanceEngineType: Redis
+    paas: paas
+spec:
+  replicas: 1
+  selector:
+    instanceId: paas-redis
+  template:
+    metadata:
+      name: paas-redis
+      namespace: newtouchone
+      labels:
+        instanceId: paas-redis
+        instanceEngineType: Redis
+        paas: paas
+    spec:
+      volumes:
+      - name: rbd-vol
+        rbd:
+          monitors:
+          - 172.21.5.104:6789
+          pool: paas
+          image: redispaas
+          user: admin
+          secretRef:
+            name: ceph-secret-newtouch-one
+          fsType: ext4
+          readOnly: false
+      containers:
+      - name: paas-redis
+        image: 172.21.3.106:5000/newtouchone/nt-redis:3.2.4
+        resources:
+          limits:
+            memory: 1024M
+            cpu: '1'
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: rbd-vol
+          mountPath: "/data"
+        env:
+        - name: FALCON_HOSTNAME
+          value: newtouch-paas-redis
+        - name: FALCON_HEARTBEAT_URL
+          value: 172.23.64.188:6030
+        - name: FALCON_TRANSFER_URL
+          value: 172.23.64.188:8433
+        - name: REDIS_AUTH_PASSWORD
+          value: root
+        imagePullPolicy: Always
+      restartPolicy: Always
+```
+    参数说明：
+    FALCON_HOSTNAME:open-falcon中显示的节点名 
+    FALCON_HEARTBEAT_URL:open-falcon heartbeat url 
+    FALCON_TRANSFER_URL:open-falcon transfer url 
+    REDIS_AUTH_PASSWORD: Redis认证密码 
+- 创建Redis的Service
+> 一下为创建Service的Yaml文件代码；参见https://git.newtouch.com/newtouch-one/nbo-deploy-resource/blob/master/k8s/redis/redis-service.yaml
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: paas-redis
+  namespace: newtouchone
+  labels:
+    instanceId: paas-redis
+    paas: paas
+  annotations:
+    kubernetesReverseproxy : |
+      '{"hosts":[{"paas-redis.newtouchone","nodePort":32322,"tcp":true}]}'
+spec:
+  selector:
+    instanceId: paas-redis
+  type: NodePort
+  ports:
+  - port: 6379
+    nodePort: 32322
+```
