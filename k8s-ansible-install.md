@@ -533,3 +533,32 @@ spec:
   - port: 6379
     nodePort: 32322
 ```
+配置文件范例见附件
+安装配置
+kubectl create -f one-namespace.yaml 
+kubectl create -f one-zk-deployment.yaml 
+kubectl create -f one-zk-service.yaml 
+kubectl create -f cephsecret.yaml 
+kubectl create -f mysql-configmap.yaml 
+kubectl create -f mysql-rc.yaml 
+kubectl create -f mysql-service.yaml 
+kubectl create -f redis-rc.yaml 
+kubectl create -f redis-service.yaml 
+kubectl create -f rabbitmq-deployment.yaml 
+kubectl create -f rabbitmq-service.yaml 
+kubectl create -f sonarqube-deployment.yaml 
+kubectl create -f sonarqube-service.yaml 
+删除配置
+kubectl delete -f sonarqube-service.yaml 
+kubectl delete -f sonarqube-deployment.yaml 
+kubectl delete -f rabbitmq-service.yaml 
+kubectl delete -f rabbitmq-deployment.yaml 
+kubectl delete -f redis-service.yaml 
+kubectl delete -f redis-rc.yaml 
+kubectl delete -f mysql-service.yaml 
+kubectl delete -f mysql-rc.yaml 
+kubectl delete -f mysql-configmap.yaml 
+kubectl delete -f cephsecret.yaml 
+kubectl delete -f one-zk-service.yaml 
+kubectl delete -f one-zk-deployment.yaml 
+kubectl delete -f one-namespace.yaml 
