@@ -562,3 +562,8 @@ kubectl delete -f cephsecret.yaml
 kubectl delete -f one-zk-service.yaml 
 kubectl delete -f one-zk-deployment.yaml 
 kubectl delete -f one-namespace.yaml 
+
+
+[root@proxy kube-setup]# kubectl  get daemonsets -n newtouchone
+NAME        DESIRED   CURRENT   READY     UP-TO-DATE   AVAILABLE   NODE-SELECTOR   AGE
+one-proxy   1         1         1         1            1           PROXY=TRUE      36s
