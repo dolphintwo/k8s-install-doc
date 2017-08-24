@@ -40,7 +40,7 @@ spec:
             path: my.cnf
       containers:
       - name: paas-mysql
-        image: 172.21.7.11:5000/newtouchone/mysql:5.7
+        image: 172.21.7.11:5000/newtouchone/nt-mysql:5.7
         resources:
           limits:
             memory: "1024M"

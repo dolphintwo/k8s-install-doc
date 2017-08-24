@@ -6,7 +6,7 @@ metadata:
   labels:
     instanceId: paas-mysql
 data:
-  mysql: |
+  my-cnf: |
     [mysqld]
     log-bin=mysql-bin
     server-id=1

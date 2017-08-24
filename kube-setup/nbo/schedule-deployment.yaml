@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  generation: 2
+  labels:
+    app: schedule
+    version: "2.0"
+  name: schedule
+  namespace: newtouchone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: schedule
+  template:
+    metadata:
+      annotations:
+        pod.alpha.kubernetes.io/init-containers: '[{"name":"copy","image":"172.21.7.11:5000/newtouchone/nboschedule:1708241108","resources":{},"volumeMounts":[{"name":"volume","mountPath":"/jar"}]}]'
+      labels:
+        app: schedule
+    spec:
+      containers:
+      - env:
+        - name: heartBeat 
+          value: 0.0.0.0:6030
+        - name: transFer
+          value: 0.0.0.0:8433
+        - name: projectName
+          value: schedule
+        - name: nodejsfile
+        image: 172.21.7.11:5000/newtouchone/jdk1.8:2.0
+        name: runtime
+        volumeMounts:
+        - mountPath: /jar
+          name: volume
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: volume
