@@ -15,7 +15,7 @@ spec:
   template:
     metadata:
       annotations:
-        pod.alpha.kubernetes.io/init-containers: '[{"name":"copy","image":"172.21.7.11:5000/newtouchone/nboapi:1708241108","resources":{},"volumeMounts":[{"name":"volume","mountPath":"/jar"}]}]'
+        pod.alpha.kubernetes.io/init-containers: '[{"name":"copy","image":"172.21.7.11:5000/newtouchone/nboapi-v4.2.5:1503561600","resources":{},"volumeMounts":[{"name":"volume","mountPath":"/jar"}]}]'
       labels:
         app: api
     spec:

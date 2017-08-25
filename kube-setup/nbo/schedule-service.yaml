@@ -2,19 +2,19 @@ apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    kubernetesReverseproxy: '{"hosts": [{"host": "88888.one2.newtouch.com","http": "true",
-      "port": "80","nodePort":"30291"}]}'
+    kubernetesReverseproxy: '{"hosts": [{"host": "schedule.one2.newtouch.com","http": "true",
+      "port": "80","nodePort":"30294"}]}'
   labels:
-    app: 88888
-  name: 88888
+    app: schedule
+  name: schedule
   namespace: newtouchone
 spec:
   ports:
-  - nodePort: 30291
+  - nodePort: 30294
     port: 8080
     protocol: TCP
     targetPort: 8080
   selector:
-    app: 88888
+    app: schedule
   sessionAffinity: None
   type: NodePort

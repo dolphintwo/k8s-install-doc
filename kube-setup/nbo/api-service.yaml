@@ -3,14 +3,14 @@ kind: Service
 metadata:
   annotations:
     kubernetesReverseproxy: '{"hosts": [{"host": "api.one2.newtouch.com","http": "true",
-      "port": "80","nodePort":"30291"}]}'
+      "port": "80","nodePort":"30292"}]}'
   labels:
     app: api
   name: api
   namespace: newtouchone
 spec:
   ports:
-  - nodePort: 30291
+  - nodePort: 30292
     port: 8080
     protocol: TCP
     targetPort: 8080
