@@ -1,0 +1,176 @@
+
+kubectl label nodes 172.21.4.3 PROXY=TRUE
+kubectl label nodes 172.21.7.11 FUN=DOCKER
+kubectl label nodes 172.21.7.11 BUILD=TRUE
+kubectl label nodes 172.21.7.11 SERVICE=TRUE
+kubectl label nodes 172.21.7.11 REGISTRY=TRUE
+kubectl label nodes 172.21.7.13 FUN=DOCKER
+kubectl label nodes 172.21.7.13 BUILD=TRUE
+kubectl label nodes 172.21.7.13 SERVICE=TRUE
+kubectl label nodes 172.21.7.13 CEPH=TRUE
+
+
+
+
+$ ansible-playbook -i hosts install_etcd.yml
+etcdserver节点检查
+[
+  systemctl status etcd
+  curl http://172.21.7.11:2379/v2/stats/self
+  ETCDCTL_API=3 /root/local/bin/etcdctl --endpoints=http://172.21.7.11:2379  endpoint health
+]
+
+$ ansible-playbook -i hosts install_k8s_master.yml
+kuber_master节点检查[
+  kubectl get svc kubernetes
+    NAME         CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+    kubernetes   10.254.0.1   <none>        443/TCP   1d
+  systemctl status kube-apiserver
+  kubectl get componentstatuses
+]
+
+$ ansible-playbook -i hosts install_k8s_node.yml
+修改每个节点上的docker info
+	vim /etc/docker/daemon.json 
+	systemctl daemon-reload 
+	systemctl restart docker
+	docker info
+ [通过csr]
+	kubectl get csr
+	kubectl certificate approve csr-xxxxx
+ [给节点打标签]
+	kubectl label nodes 172.21.4.3 PROXY=TRUE
+	kubectl label nodes 172.21.7.11 FUN=DOCKER
+	kubectl label nodes 172.21.7.11 BUILD=TRUE
+	kubectl label nodes 172.21.7.13 FUN=DOCKER
+	kubectl label nodes 172.21.7.13 BUILD=TRUE
+	kubectl label nodes 172.21.7.13 CEPH=TRUE
+	kubectl label nodes 172.21.7.11 SERVICE=TRUE
+	kubectl label nodes 172.21.7.13 SERVICE=TRUE
+	kubectl label nodes 172.21.7.11 REGISTRY=TRUE
+检查各个node节点[
+	systemctl status kube-proxy
+	kubectl get nodes
+	检查docker网卡和flanneld网卡在同一c网段，如果不是重启该台机器
+]
+	
+$ ansible-playbook -i hosts install_registry.yml
+node1[
+  docker load < nboadmin-v4.2.5_1503561600.tar
+  docker load < nboapi-v4.2.5_1503561600.tar
+  docker load < nboopt-v4.2.5_1503561600.tar
+  docker load < nboschedule-v4.2.5_1503561600.tar
+  docker load < nt-mysql_5.7.tar
+  docker tag 192.168.0.8:5000/newtouchone/nt-mysql:5.7 172.21.7.11:5000/newtouchone/nt-mysql:5.7
+  docker rmi 192.168.0.8:5000/newtouchone/nt-mysql:5.7
+
+  docker push 172.21.7.11:5000/newtouchone/nt-mysql:5.7
+  docker push 172.21.7.11:5000/newtouchone/nboadmin-v4.2.5:1503561600
+  docker push 172.21.7.11:5000/newtouchone/nboapi-v4.2.5:1503561600
+  docker push 172.21.7.11:5000/newtouchone/nboopt-v4.2.5:1503561600
+  docker push 172.21.7.11:5000/newtouchone/nboschedule-v4.2.5:1503561600
+]
+检查registry节点[
+	docker images
+]
+检查其他节点[
+	ll /etc/docker/certs.d/172.21.7.11:5000/ca.crt
+]
+$ ansible-playbook -i hosts install_k8s_addon.yml
+检查[
+	kubectl -n kube-system get po | grep dns
+	kubectl -n kube-system get po | grep dashboard
+	kubectl -n kube-system get po | grep -E 'heapster|monitoring'
+]
+
+$ ansible-playbook -i hosts install_ceph.yml
+检查node2[
+  ceph -s
+  docker ps -a |grep ceph
+]
+每个节点安装ceph-commen[
+	tar -zxvf ceph.tar.gz 
+	cd ceph/
+	chmod +x install_ceph.sh 
+	./install_ceph.sh 
+]
+
+
+cd kube-setup
+ceph节点：[cat /etc/ceph/ceph.client.admin.keyring取key用base64加密]
+vim 05-cephsecret.yaml 修改key
+kubectl create -f 01~16
+检查[
+	kubectl get rc -n newtouchone
+	kubectl get pods -n newtouchone
+	kubectl get services -n newtouchone
+]
+打包
+
+nbo部署
+docker tag newtouchone/nboimages-schedule:v4.2.4-1.0.0 172.21.7.11:5000/newtouchone/nboimages-schedule:v4.2.4-1.0.0
+docker tag newtouchone/nboimages-api:v4.2.4-1.0.0 172.21.7.11:5000/newtouchone/nboimages-api:v4.2.4-1.0.0
+docker tag newtouchone/nboimages-opt:v4.2.4-1.0.0 172.21.7.11:5000/newtouchone/nboimages-opt:v4.2.4-1.0.0
+docker tag newtouchone/nboimages-admin:v4.2.4-1.0.0 172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.4-1.0.0
+docker rmi newtouchone/nboimages-schedule:v4.2.4-1.0.0
+docker rmi newtouchone/nboimages-api:v4.2.4-1.0.0
+docker rmi newtouchone/nboimages-opt:v4.2.4-1.0.0
+docker rmi newtouchone/nboimages-admin:v4.2.4-1.0.0
+docker push 172.21.7.11:5000/newtouchone/nboimages-schedule:v4.2.4-1.0.0
+docker push 172.21.7.11:5000/newtouchone/nboimages-api:v4.2.4-1.0.0
+docker push 172.21.7.11:5000/newtouchone/nboimages-opt:v4.2.4-1.0.0
+docker push 172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.4-1.0.0
+
+
+安装顺序
+172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.5-1.0.0
+172.21.7.11:5000/newtouchone/nboimages-opt:v4.2.5-1.0.0
+172.21.7.11:5000/newtouchone/nboimages-api:v4.2.5-1.0.0
+172.21.7.11:5000/newtouchone/nboimages-schedule:v4.2.5-1.0.0
+
+docker run -d \
+--net=host \
+--name=ceph-mon \
+--restart always \
+-v /etc/ceph:/etc/ceph \
+-v /var/lib/ceph/:/var/lib/ceph/ \
+-e MON_IP=172.21.7.13 \
+-e CEPH_PUBLIC_NETWORK=172.21.7.13/16 \
+172.21.7.11:5000/newtouchone/ceph-daemon mon
+
+echo "
+osd pool default size = 1
+osd pool default min size = 1
+osd crush chooseleaf type = 0
+" >> /etc/ceph/ceph.conf
+#重启容器
+docker restart ceph-mon
+
+docker run -d \
+--net=host \
+--name=ceph-mds \
+--restart always \
+-v /etc/ceph:/etc/ceph \
+-v /var/lib/ceph/:/var/lib/ceph/ \
+-e CEPHFS_CREATE=1 \
+172.21.7.11:5000/newtouchone/ceph-daemon mds
+
+docker run -d \
+--net=host \
+--name=ceph-osd \
+--restart always \
+--privileged=true \
+-v /etc/ceph:/etc/ceph \
+-v /var/lib/ceph/:/var/lib/ceph/ \
+-v /dev/:/dev/ \
+-v /ceph:/var/lib/ceph/osd \
+172.21.7.11:5000/newtouchone/ceph-daemon osd_directory
+
+
+
+?docker run -d \
+    -p 9080:8080 \
+    --name=ceph-wrapper \
+    --restart always \
+    -v /etc/ceph:/etc/ceph \
+    172.21.7.11:5000/newtouchone/paas-ceph-wrapper:20161013

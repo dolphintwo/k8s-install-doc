@@ -52,8 +52,6 @@ spec:
         - name: FALCON_TRANSFER_URL
           value: 172.21.3.188:8433
         - name: REDIS_AUTH_PASSWORD
-          value: root
+          value: NewtouchOne123
         imagePullPolicy: Always
-      nodeSelector:
-        FUN: SERVICE
       restartPolicy: Always

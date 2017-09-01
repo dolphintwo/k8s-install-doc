@@ -60,7 +60,7 @@ spec:
         - name: FALCON_TRANSFER_URL
           value: 172.23.64.188:8433
         - name: MYSQL_ROOT_PASSWORD
-          value: root
+          value: NewtouchOne123
         - name: MYSQL_DATABASE
           value: paas
         - name: MYSQL_USER

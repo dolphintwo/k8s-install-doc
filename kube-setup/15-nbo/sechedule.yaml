@@ -1,0 +1,62 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  generation: 2
+  labels:
+    app: schedule
+    version: "4.0"
+  name: schedule
+  namespace: newtouchone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: schedule
+  template:
+    metadata:
+      annotations:
+        pod.alpha.kubernetes.io/init-containers: '[{"name":"copy","image":"172.21.7.11:5000/newtouchone/nboimages-schedule:v4.2.5-1.0.0","resources":{},"volumeMounts":[{"name":"volume","mountPath":"/jar"}]}]'
+      labels:
+        app: schedule
+    spec:
+      containers:
+      - env:
+        - name: heartBeat
+          value: 172.30.248.207:6030
+        - name: transFer
+          value: 172.30.248.207:8433
+        - name: projectName
+          value: nbo
+        image: 172.21.7.11:5000/newtouchone/deployimage-jdk-1.8.0_73:v4.2-1.0.1
+        name: runtime
+        volumeMounts:
+        - mountPath: /jar
+          name: volume
+      nodeSelector:
+        FUN: DOCKER
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubernetesReverseproxy: '{"hosts": [{"host": "sechedule.one2.newtouch.com","http": "true",
+      "port": "80","nodePort":"30003"}]}'
+  labels:
+    app: schedule
+  name: schedule
+  namespace: newtouchone
+spec:
+  ports:
+  - nodePort: 30003
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: schedule
+  sessionAffinity: None
+  type: NodePort
