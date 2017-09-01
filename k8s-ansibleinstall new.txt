@@ -13,7 +13,7 @@ kubectl label nodes 172.21.7.13 CEPH=TRUE
 
 
 $ ansible-playbook -i hosts install_etcd.yml
-etcdserver½Úµã¼ì²é
+etcdserverèŠ‚ç‚¹æ£€æŸ¥
 [
   systemctl status etcd
   curl http://172.21.7.11:2379/v2/stats/self
@@ -21,7 +21,7 @@ etcdserver½Úµã¼ì²é
 ]
 
 $ ansible-playbook -i hosts install_k8s_master.yml
-kuber_master½Úµã¼ì²é[
+kuber_masterèŠ‚ç‚¹æ£€æŸ¥[
   kubectl get svc kubernetes
     NAME         CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
     kubernetes   10.254.0.1   <none>        443/TCP   1d
@@ -30,15 +30,15 @@ kuber_master½Úµã¼ì²é[
 ]
 
 $ ansible-playbook -i hosts install_k8s_node.yml
-ĞŞ¸ÄÃ¿¸ö½ÚµãÉÏµÄdocker info
+ä¿®æ”¹æ¯ä¸ªèŠ‚ç‚¹ä¸Šçš„docker info
 	vim /etc/docker/daemon.json 
 	systemctl daemon-reload 
 	systemctl restart docker
 	docker info
- [Í¨¹ıcsr]
+ [é€šè¿‡csr]
 	kubectl get csr
 	kubectl certificate approve csr-xxxxx
- [¸ø½Úµã´ò±êÇ©]
+ [ç»™èŠ‚ç‚¹æ‰“æ ‡ç­¾]
 	kubectl label nodes 172.21.4.3 PROXY=TRUE
 	kubectl label nodes 172.21.7.11 FUN=DOCKER
 	kubectl label nodes 172.21.7.11 BUILD=TRUE
@@ -48,10 +48,10 @@ $ ansible-playbook -i hosts install_k8s_node.yml
 	kubectl label nodes 172.21.7.11 SERVICE=TRUE
 	kubectl label nodes 172.21.7.13 SERVICE=TRUE
 	kubectl label nodes 172.21.7.11 REGISTRY=TRUE
-¼ì²é¸÷¸önode½Úµã[
+æ£€æŸ¥å„ä¸ªnodeèŠ‚ç‚¹[
 	systemctl status kube-proxy
 	kubectl get nodes
-	¼ì²édockerÍø¿¨ºÍflanneldÍø¿¨ÔÚÍ¬Ò»cÍø¶Î£¬Èç¹û²»ÊÇÖØÆô¸ÃÌ¨»úÆ÷
+	æ£€æŸ¥dockerç½‘å¡å’Œflanneldç½‘å¡åœ¨åŒä¸€cç½‘æ®µï¼Œå¦‚æœä¸æ˜¯é‡å¯è¯¥å°æœºå™¨
 ]
 	
 $ ansible-playbook -i hosts install_registry.yml
@@ -70,25 +70,25 @@ node1[
   docker push 172.21.7.11:5000/newtouchone/nboopt-v4.2.5:1503561600
   docker push 172.21.7.11:5000/newtouchone/nboschedule-v4.2.5:1503561600
 ]
-¼ì²éregistry½Úµã[
+æ£€æŸ¥registryèŠ‚ç‚¹[
 	docker images
 ]
-¼ì²éÆäËû½Úµã[
+æ£€æŸ¥å…¶ä»–èŠ‚ç‚¹[
 	ll /etc/docker/certs.d/172.21.7.11:5000/ca.crt
 ]
 $ ansible-playbook -i hosts install_k8s_addon.yml
-¼ì²é[
+æ£€æŸ¥[
 	kubectl -n kube-system get po | grep dns
 	kubectl -n kube-system get po | grep dashboard
 	kubectl -n kube-system get po | grep -E 'heapster|monitoring'
 ]
 
 $ ansible-playbook -i hosts install_ceph.yml
-¼ì²énode2[
+æ£€æŸ¥node2[
   ceph -s
   docker ps -a |grep ceph
 ]
-Ã¿¸ö½Úµã°²×°ceph-commen[
+æ¯ä¸ªèŠ‚ç‚¹å®‰è£…ceph-commen[
 	tar -zxvf ceph.tar.gz 
 	cd ceph/
 	chmod +x install_ceph.sh 
@@ -97,17 +97,17 @@ $ ansible-playbook -i hosts install_ceph.yml
 
 
 cd kube-setup
-ceph½Úµã£º[cat /etc/ceph/ceph.client.admin.keyringÈ¡keyÓÃbase64¼ÓÃÜ]
-vim 05-cephsecret.yaml ĞŞ¸Äkey
+cephèŠ‚ç‚¹ï¼š[cat /etc/ceph/ceph.client.admin.keyringå–keyç”¨base64åŠ å¯†]
+vim 05-cephsecret.yaml ä¿®æ”¹key
 kubectl create -f 01~16
-¼ì²é[
+æ£€æŸ¥[
 	kubectl get rc -n newtouchone
 	kubectl get pods -n newtouchone
 	kubectl get services -n newtouchone
 ]
-´ò°ü
+æ‰“åŒ…
 
-nbo²¿Êğ
+nboéƒ¨ç½²
 docker tag newtouchone/nboimages-schedule:v4.2.4-1.0.0 172.21.7.11:5000/newtouchone/nboimages-schedule:v4.2.4-1.0.0
 docker tag newtouchone/nboimages-api:v4.2.4-1.0.0 172.21.7.11:5000/newtouchone/nboimages-api:v4.2.4-1.0.0
 docker tag newtouchone/nboimages-opt:v4.2.4-1.0.0 172.21.7.11:5000/newtouchone/nboimages-opt:v4.2.4-1.0.0
@@ -122,7 +122,7 @@ docker push 172.21.7.11:5000/newtouchone/nboimages-opt:v4.2.4-1.0.0
 docker push 172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.4-1.0.0
 
 
-°²×°Ë³Ğò
+å®‰è£…é¡ºåº
 172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.5-1.0.0
 172.21.7.11:5000/newtouchone/nboimages-opt:v4.2.5-1.0.0
 172.21.7.11:5000/newtouchone/nboimages-api:v4.2.5-1.0.0
@@ -143,7 +143,7 @@ osd pool default size = 1
 osd pool default min size = 1
 osd crush chooseleaf type = 0
 " >> /etc/ceph/ceph.conf
-#ÖØÆôÈİÆ÷
+#é‡å¯å®¹å™¨
 docker restart ceph-mon
 
 docker run -d \
@@ -168,7 +168,7 @@ docker run -d \
 
 
 
-?docker run -d \
+ï»¿docker run -d \
     -p 9080:8080 \
     --name=ceph-wrapper \
     --restart always \
