@@ -207,32 +207,31 @@ newtouchone/serviceimage-elasticsearch:5.5.0
 newtouchone/serviceimage-logstash:5.5.0
 newtouchone/serviceimage-filebeat:5.5.0	
 
-docker load < newtouchone-serviceimage-elasticsearch-5.5.0.tar.gz
-docker load < newtouchone-serviceimage-filebeat-5.5.0.tar.gz
-docker load < newtouchone-serviceimage-kafka-2.11-k8s.tar.gz
-docker load < newtouchone-serviceimage-logstash-5.5.0.tar.gz
 docker load < newtouchone-serviceimage-zookeeper-3.4.10.tar.gz
+docker load < newtouchone-serviceimage-kafka-2.11-k8s.tar.gz
+docker load < newtouchone-serviceimage-elasticsearch-5.5.0.tar.gz
+docker load < newtouchone-serviceimage-logstash-5.5.0.tar.gz
+docker load < newtouchone-serviceimage-filebeat-5.5.0.tar.gz
 
+docker tag newtouchone/serviceimage-zookeeper:3.4.10 172.21.7.11:5000/newtouchone/one-zookeeper:3.4.10
+docker tag newtouchone/serviceimage-kafka:2.11-k8s 172.21.7.11:5000/newtouchone/one-kafka:2.11-k8s
+docker tag newtouchone/serviceimage-elasticsearch:5.5.0 172.21.7.11:5000/newtouchone/one-elasticsearch:5.5.0
+docker tag newtouchone/serviceimage-logstash:5.5.0 172.21.7.11:5000/newtouchone/one-logstash:5.5.0
+docker tag newtouchone/serviceimage-filebeat:5.5.0 172.21.7.11:5000/newtouchone/one-filebeat:5.5.0
 			
-docker tag newtouchone/serviceimage-kafka:2.11-k8s 172.21.7.11:5000/newtouchone/serviceimage-kafka:2.11-k8s
-docker tag newtouchone/serviceimage-elasticsearch:5.5.0 172.21.7.11:5000/newtouchone/serviceimage-elasticsearch
-docker tag newtouchone/serviceimage-zookeeper:3.4.10 172.21.7.11:5000/newtouchone/serviceimage-zookeeper:3.4.10
-docker tag newtouchone/serviceimage-logstash:5.5.0 172.21.7.11:5000/newtouchone/serviceimage-logstash:5.5.0
-docker tag newtouchone/serviceimage-filebeat:5.5.0 172.21.7.11:5000/newtouchone/serviceimage-filebeat:5.5.0
-
+docker rmi newtouchone/serviceimage-zookeeper:3.4.10 
 docker rmi newtouchone/serviceimage-kafka:2.11-k8s 
 docker rmi newtouchone/serviceimage-elasticsearch:5.5.0
-docker rmi newtouchone/serviceimage-zookeeper:3.4.10 
 docker rmi newtouchone/serviceimage-logstash:5.5.0 
 docker rmi newtouchone/serviceimage-filebeat:5.5.0 
 
-docker push 172.21.7.11:5000/newtouchone/serviceimage-kafka:2.11-k8s 
-docker push 172.21.7.11:5000/newtouchone/serviceimage-elasticsearch:5.5.0
-docker push 172.21.7.11:5000/newtouchone/serviceimage-zookeeper:3.4.10 
-docker push 172.21.7.11:5000/newtouchone/serviceimage-logstash:5.5.0 
-docker push 172.21.7.11:5000/newtouchone/serviceimage-filebeat:5.5.0 	
+docker push 172.21.7.11:5000/newtouchone/one-zookeeper:3.4.10 
+docker push 172.21.7.11:5000/newtouchone/one-kafka:2.11-k8s 
+docker push 172.21.7.11:5000/newtouchone/one-elasticsearch:5.5.0
+docker push 172.21.7.11:5000/newtouchone/one-logstash:5.5.0 
+docker push 172.21.7.11:5000/newtouchone/one-filebeat:5.5.0 	
 
-
+启动顺序：zookpeer - kafka - elasticsearch - logstash - filebeat
 
 
 

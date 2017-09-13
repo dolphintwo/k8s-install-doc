@@ -57,7 +57,7 @@ spec:
           path: "/one/filebeatData"
       containers:
       - name: one-filebeat
-        image: 172.21.9.85:5000/newtouchone/one-filebeat:5.5.0
+        image: 172.21.7.11:5000/newtouchone/one-filebeat:5.5.0
         env:
         - name: HOSTNAME
           valueFrom:

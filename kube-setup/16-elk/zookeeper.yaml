@@ -40,7 +40,7 @@ spec:
       - name: data
         rbd:
           monitors:
-          - 172.21.9.85:6789
+          - 172.21.7.13:6789
           image: one-zookeeper
           fsType: ext4
           pool: paas
@@ -49,7 +49,7 @@ spec:
             name: ceph-secret-newtouch-one
       containers:
       - name: one-zookeeper
-        image: 172.21.9.85:5000/newtouchone/one-zookeeper:3.4.10
+        image: 172.21.7.11:5000/newtouchone/one-zookeeper:3.4.10
         volumeMounts:
         - name: config
           mountPath: "/one/config"
