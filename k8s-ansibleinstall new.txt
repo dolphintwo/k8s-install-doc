@@ -128,6 +128,10 @@ docker push 172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.4-1.0.0
 172.21.7.11:5000/newtouchone/nboimages-api:v4.2.5-1.0.0
 172.21.7.11:5000/newtouchone/nboimages-schedule:v4.2.5-1.0.0
 
+nbo应用部署
+首先安装nbo-module：compile install
+然后package admin，opt，api，schedule
+
 docker run -d \
 --net=host \
 --name=ceph-mon \
@@ -168,9 +172,81 @@ docker run -d \
 
 
 
-﻿docker run -d \
+docker run -d \
     -p 9080:8080 \
     --name=ceph-wrapper \
     --restart always \
     -v /etc/ceph:/etc/ceph \
     172.21.7.11:5000/newtouchone/paas-ceph-wrapper:20161013
+
+
+
+confd+zk配置域名
+进入zk
+kubectl exec -ti zookeeper-428547652-03ndw bash -n newtouchone
+bash# zkCli.sh
+[zk: ~~~] create /nginx/public {"description":"ONE2测试环境域名代理","domain":"one2.newtouch.com","externalAddress":["218.245.66.213"],"internalAddress":["172.21.4.3"],"name":"public"}
+[zk: ~~~] create /nginx/public/k8s {"description":"K8S公网代理","host":"k8s.one2.newtouch.com","http":"true","name":"dashboard","port":"80","realServers":["kubernetes-dashboard.kube-system:80"]}
+[zk: ~~~] create /nginx/public/admin {"description":"企业视图公网代理","host":"admin.one2.newtouch.com","http":"true","name":"admin","port":"80","realServers":["admin.newtouchone:8080"]}
+[zk: ~~~] create /nginx/public/api {"description":"操作视图公网代理","host":"api.one2.newtouch.com","http":"true","name":"api","port":"80","realServers":["api.newtouchone:8080"]}
+[zk: ~~~] create /nginx/public/sonar {"description":"SONAR公网代理","host":"sonar.one2.newtouch.com","http":"true","name":"sonar","port":"80","realServers":["sonar.newtouchone:9000"]}
+
+
+# 持续集成运行环境
+            Kubernetes地址（Kubernetes-apiservice访问地址，可以是域名访问地址也可以是http://ip+port）
+            docker仓库地址（nbo-registry地址）
+            Kubernetes证书（k8s证书，来自master主机/root/.kube/config文件client-certificate-data参数值）
+            Kubernetes密钥（k8s密钥，来自master主机/root/.kube/config文件client-key-data参数值）
+
+			
+监控安装 elk
+镜像
+newtouchone/serviceimage-zookeeper:3.4.10
+newtouchone/serviceimage-kafka:2.11-k8s
+newtouchone/serviceimage-elasticsearch:5.5.0
+newtouchone/serviceimage-logstash:5.5.0
+newtouchone/serviceimage-filebeat:5.5.0	
+
+docker load < newtouchone-serviceimage-elasticsearch-5.5.0.tar.gz
+docker load < newtouchone-serviceimage-filebeat-5.5.0.tar.gz
+docker load < newtouchone-serviceimage-kafka-2.11-k8s.tar.gz
+docker load < newtouchone-serviceimage-logstash-5.5.0.tar.gz
+docker load < newtouchone-serviceimage-zookeeper-3.4.10.tar.gz
+
+			
+docker tag newtouchone/serviceimage-kafka:2.11-k8s 172.21.7.11:5000/newtouchone/serviceimage-kafka:2.11-k8s
+docker tag newtouchone/serviceimage-elasticsearch:5.5.0 172.21.7.11:5000/newtouchone/serviceimage-elasticsearch
+docker tag newtouchone/serviceimage-zookeeper:3.4.10 172.21.7.11:5000/newtouchone/serviceimage-zookeeper:3.4.10
+docker tag newtouchone/serviceimage-logstash:5.5.0 172.21.7.11:5000/newtouchone/serviceimage-logstash:5.5.0
+docker tag newtouchone/serviceimage-filebeat:5.5.0 172.21.7.11:5000/newtouchone/serviceimage-filebeat:5.5.0
+
+docker rmi newtouchone/serviceimage-kafka:2.11-k8s 
+docker rmi newtouchone/serviceimage-elasticsearch:5.5.0
+docker rmi newtouchone/serviceimage-zookeeper:3.4.10 
+docker rmi newtouchone/serviceimage-logstash:5.5.0 
+docker rmi newtouchone/serviceimage-filebeat:5.5.0 
+
+docker push 172.21.7.11:5000/newtouchone/serviceimage-kafka:2.11-k8s 
+docker push 172.21.7.11:5000/newtouchone/serviceimage-elasticsearch:5.5.0
+docker push 172.21.7.11:5000/newtouchone/serviceimage-zookeeper:3.4.10 
+docker push 172.21.7.11:5000/newtouchone/serviceimage-logstash:5.5.0 
+docker push 172.21.7.11:5000/newtouchone/serviceimage-filebeat:5.5.0 	
+
+
+
+
+
+
+prometheus安装
+
+docker load < prometheus-v1.7.1.tar.gz 
+docker load < grafana.tar.gz 
+
+docker tag grafana/grafana:latest 172.21.7.11:5000/newtouchone/grafana:latest
+docker tag prom/prometheus:v1.7.1 172.21.7.11:5000/newtouchone/prometheus:v1.7.1
+
+docker rmi grafana/grafana:latest 
+docker rmi prom/prometheus:v1.7.1 
+
+docker push 172.21.7.11:5000/newtouchone/grafana:latest
+docker push 172.21.7.11:5000/newtouchone/prometheus:v1.7.1
