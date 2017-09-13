@@ -3,21 +3,21 @@ kind: Deployment
 metadata:
   generation: 2
   labels:
-    app: schedule
+    app: admin
     version: "4.0"
-  name: schedule
+  name: admin
   namespace: newtouchone
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: schedule
+      app: admin
   template:
     metadata:
       annotations:
-        pod.alpha.kubernetes.io/init-containers: '[{"name":"copy","image":"172.21.7.11:5000/newtouchone/nboimages-schedule:v4.2.5-1.0.0","resources":{},"volumeMounts":[{"name":"volume","mountPath":"/jar"}]}]'
+        pod.alpha.kubernetes.io/init-containers: '[{"name":"copy","image":"172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.4-170906","resources":{},"volumeMounts":[{"name":"volume","mountPath":"/jar"}]}]'
       labels:
-        app: schedule
+        app: admin
     spec:
       containers:
       - env:
@@ -44,19 +44,20 @@ apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    kubernetesReverseproxy: '{"hosts": [{"host": "sechedule.one2.newtouch.com","http": "true",
-      "port": "80","nodePort":"30003"}]}'
+    kubernetesReverseproxy: '{"hosts": [{"host": "admin.one2.newtouch.com","http": "true",
+      "port": "80","nodePort":"30004"}]}'
   labels:
-    app: schedule
-  name: schedule
+    app: admin
+  name: admin
   namespace: newtouchone
 spec:
   ports:
-  - nodePort: 30003
+  - nodePort: 30004
     port: 8080
     protocol: TCP
     targetPort: 8080
   selector:
-    app: schedule
+    app: admin
   sessionAffinity: None
   type: NodePort
+
