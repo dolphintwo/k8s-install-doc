@@ -233,7 +233,12 @@ docker push 172.21.7.11:5000/newtouchone/one-filebeat:5.5.0
 
 启动顺序：zookpeer - kafka - elasticsearch - logstash - filebeat
 
-
+#创建rbd存储
+在ceph-client容器中创建所需要的rbd，可根据资源情况调整--size，单位为mb
+rbd create one-zookeeper --pool paas --size 5000
+rbd create one-kafka --pool paas --size 5000
+rbd create one-logstash --pool paas --size 5000
+rbd create one-elasticsearch --pool paas --size 10000
 
 
 prometheus安装
