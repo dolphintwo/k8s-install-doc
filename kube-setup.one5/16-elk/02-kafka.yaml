@@ -1,0 +1,89 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kafka-config
+  namespace: newtouchone
+data:
+  serverproperties: |
+    broker.id=0
+    num.network.threads=2
+    num.io.threads=4
+    socket.send.buffer.bytes=102400
+    socket.receive.buffer.bytes=102400
+    socket.request.max.bytes=104857600
+    log.dirs=/one/data/log
+    num.partitions=1
+    offsets.topic.replication.factor=1
+    transaction.state.log.replication.factor=1
+    transaction.state.log.min.isr=1
+    zookeeper.connect=one-zookeeper.newtouchone:2181
+    delete.topic.enable=true
+    listeners=PLAINTEXT://0.0.0.0:9092
+    advertised.listeners=PLAINTEXT://one-kafka.newtouchone:9092
+---
+kind: ReplicationController
+apiVersion: v1
+metadata:
+  name: one-kafka
+  namespace: newtouchone
+  labels:
+    instanceId: one-kafka
+spec:
+  replicas: 1
+  selector:
+    instanceId: one-kafka
+  template:
+    metadata:
+      name: one-kafka
+      namespace: newtouchone
+      labels:
+        instanceId: one-kafka
+    spec:
+      volumes:
+      - name: config
+        configMap:
+          name: kafka-config
+          items:
+          - key: serverproperties
+            path: server.properties
+      - name: data
+        rbd:
+          monitors:
+          - 172.21.7.13:6789
+          image: one-kafka
+          fsType: ext4
+          pool: paas
+          user: admin
+          secretRef:
+            name: ceph-secret-newtouch-one
+      containers:
+      - name: one-kafka
+        image: 172.21.7.11:5000/newtouchone/one-kafka:2.11-k8s
+        env:
+        - name: KAFKA_HEAP_OPTS
+          value: "-Xmx2G -Xms2G"
+        volumeMounts:
+        - name: config
+          mountPath: "/one/config"
+        - name: data
+          mountPath: "/one/data"
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: one-kafka
+  namespace: newtouchone
+  labels:
+    instanceId: one-kafka
+spec:
+  ports:
+  - name: '9092'
+    protocol: TCP
+    port: 9092
+    targetPort: 9092
+  selector:
+    instanceId: one-kafka
+  type: ClusterIP

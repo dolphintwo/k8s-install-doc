@@ -1,0 +1,76 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: zookeeper-config
+  namespace: newtouchone
+data:
+  zoocfg: |
+    tickTime=2000
+    initLimit=10
+    syncLimit=5
+    dataDir=/one/data
+    clientPort=2181
+---
+kind: ReplicationController
+apiVersion: v1
+metadata:
+  name: one-zookeeper
+  namespace: newtouchone
+  labels:
+    instanceId: one-zookeeper
+spec:
+  replicas: 1
+  selector:
+    instanceId: one-zookeeper
+  template:
+    metadata:
+      name: one-zookeeper
+      namespace: newtouchone
+      labels:
+        instanceId: one-zookeeper
+    spec:
+      volumes:
+      - name: config
+        configMap:
+          name: zookeeper-config
+          items:
+          - key: zoocfg
+            path: zoo.cfg
+      - name: data
+        rbd:
+          monitors:
+          - 172.21.7.13:6789
+          image: one-zookeeper
+          fsType: ext4
+          pool: paas
+          user: admin
+          secretRef:
+            name: ceph-secret-newtouch-one
+      containers:
+      - name: one-zookeeper
+        image: 172.21.7.11:5000/newtouchone/one-zookeeper:3.4.10
+        volumeMounts:
+        - name: config
+          mountPath: "/one/config"
+        - name: data
+          mountPath: "/one/data"
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: one-zookeeper
+  namespace: newtouchone
+  labels:
+    instanceId: one-zookeeper
+spec:
+  ports:
+  - name: '2181'
+    protocol: TCP
+    port: 2181
+    targetPort: 2181
+  selector:
+    instanceId: one-zookeeper
+  type: ClusterIP

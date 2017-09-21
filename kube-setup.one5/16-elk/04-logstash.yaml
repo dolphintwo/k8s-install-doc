@@ -1,0 +1,109 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: logstash-config
+  namespace: newtouchone
+data:
+  logstashyml: |
+    path.data: /one/data
+    path.config: /one/config/pipeline.conf
+  pipelineconf: |
+    input {
+        kafka {
+            bootstrap_servers => "one-kafka.newtouchone:9092"
+            topics => ["one-log"]
+        }
+    }
+    filter {
+        json {
+            source => "message"
+            target => "temp"
+            remove_field => ["message"]
+        }
+        mutate {
+            add_field => {
+                "filePath" => "%{[temp][source]}"
+                "filePathTemp" => "%{[temp][source]}"
+            }
+        }
+        mutate {
+            split => { "filePathTemp" => "/" }
+        }
+        mutate {
+            add_field => {
+                "@beatTimestamp" => "%{[temp][@timestamp]}"
+                "hostname" => "%{[temp][beat][hostname]}"
+                "offset" => "%{[temp][offset]}"
+                "message" => "%{[temp][message]}"
+                "project" => "%{[filePathTemp][2]}"
+                "application" => "%{[filePathTemp][3]}"
+                "deployVersion" => "%{[filePathTemp][4]}"
+                "container" => "%{[filePathTemp][5]}"
+            }
+            remove_field => ["temp","filePathTemp"]
+        }
+        mutate {
+            convert => ["offset", "integer"]
+        }
+    }
+    output {
+        elasticsearch {
+            hosts => ["one-elasticsearch.newtouchone:9200"]
+            index => "filebeat-%{+YYYY.MM.dd}"
+            flush_size => 20000
+            idle_flush_time => 10
+            template_overwrite => true
+        }
+    }
+---
+kind: ReplicationController
+apiVersion: v1
+metadata:
+  name: one-logstash
+  namespace: newtouchone
+  labels:
+    instanceId: one-logstash
+spec:
+  replicas: 1
+  selector:
+    instanceId: one-logstash
+  template:
+    metadata:
+      name: one-logstash
+      namespace: newtouchone
+      labels:
+        instanceId: one-logstash
+    spec:
+      volumes:
+      - name: config
+        configMap:
+          name: logstash-config
+          items:
+          - key: logstashyml
+            path: logstash.yml
+          - key: pipelineconf
+            path: pipeline.conf
+      - name: data
+        rbd:
+          monitors:
+          - 172.21.7.13:6789
+          image: one-logstash
+          fsType: ext4
+          pool: paas
+          user: admin
+          secretRef:
+            name: ceph-secret-newtouch-one
+      containers:
+      - name: one-logstash
+        image: 172.21.7.11:5000/newtouchone/one-logstash:5.5.0
+        env:
+        - name: LS_JAVA_OPTS
+          value: "-Xmx2G -Xms2G"
+        volumeMounts:
+        - name: config
+          mountPath: "/one/config"
+        - name: data
+          mountPath: "/one/data"
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always

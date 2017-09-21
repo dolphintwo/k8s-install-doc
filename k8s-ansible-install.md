@@ -49,8 +49,9 @@ The key's randomart image is:
 #将公钥传输到每个节点服务器上
 [@proxy]# scp .ssh/id_rsa.pub root@172.21.7.11:/tmp
 #在节点上将公钥cat文件流输出到.ssh/authorized_keys，赋600权限
-[@node1]# cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys
-[@node1]# chmod 600 ~/.ssh/authorized_keys
+cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys
+
+chmod 600 ~/.ssh/authorized_keys
 ```
 *验证从ansible安装机到被安装机免密登陆*
 # 2.内核升级
@@ -62,8 +63,8 @@ The key's randomart image is:
 前置条件
 安装ansible
 ```
-yum install epel-release
-yum install ansible
+yum install -y epel-release
+yum install -y ansible
 ```
 ## 4.1 clone ansible工程
 ```

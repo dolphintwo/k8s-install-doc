@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    name: grafana
+  name: grafana
+  namespace: monitor
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: 172.21.7.11:5000/newtouchone/grafana:latest
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          value: secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubernetesReverseproxy: '{"hosts": [{"host": "grafana.one2.newtouch.com","http": "true", "port": "80","nodePort":"30200"}]}'
+  labels:
+    name: grafana
+  name: grafana
+  namespace: monitor
+spec:
+  ports:
+  - nodePort: 30200
+    port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    name: grafana
+  sessionAffinity: None
+  type: NodePort

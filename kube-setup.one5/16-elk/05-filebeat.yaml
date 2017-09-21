@@ -1,0 +1,74 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: filebeat-config
+  namespace: newtouchone
+data:
+  filebeatyml: |
+    filebeat.prospectors:
+    - input_type: log
+      paths:
+        - /applog/*/*/*/*/*/*/*.log
+        - /applog/*/*/*/*/*/*/*/*.log
+        - /applog/*/*/*/*/*/*/*/*/*.log
+        - /applog/*/*/*/*/*/*/*/*/*/*.log
+        - /applog/*/*/*/*/*/*/*/*/*/*/*.log
+    name: ${HOSTNAME}
+    output.kafka:
+      hosts: ["one-kafka.newtouchone:9092"]
+      topic: one-log
+      partition.round_robin:
+        reachable_only: false
+      required_acks: 1
+      compression: gzip
+      max_message_bytes: 1000000
+---
+kind: DaemonSet
+apiVersion: extensions/v1beta1
+metadata:
+  name: one-filebeat
+  namespace: newtouchone
+  labels:
+    instanceId: one-filebeat
+spec:
+  selector:
+    matchLabels:
+      instanceId: one-filebeat
+  template:
+    metadata:
+      name: one-filebeat
+      namespace: newtouchone
+      labels:
+        instanceId: one-filebeat
+    spec:
+      volumes:
+      - name: config
+        configMap:
+          name: filebeat-config
+          items:
+          - key: filebeatyml
+            path: filebeat.yml
+      - name: log
+        hostPath:
+          path: "/applog"
+      - name: data
+        hostPath:
+          path: "/one/filebeatData"
+      containers:
+      - name: one-filebeat
+        image: 172.21.7.11:5000/newtouchone/one-filebeat:5.5.0
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: config
+          mountPath: "/one/config"
+        - name: log
+          mountPath: "/applog"
+        - name: data
+          mountPath: "/one/data"
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always

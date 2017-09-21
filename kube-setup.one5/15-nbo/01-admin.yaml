@@ -1,0 +1,63 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  generation: 2
+  labels:
+    app: admin
+    version: "4.0"
+  name: admin
+  namespace: newtouchone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin
+  template:
+    metadata:
+      annotations:
+        pod.alpha.kubernetes.io/init-containers: '[{"name":"copy","image":"172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.4-170906","resources":{},"volumeMounts":[{"name":"volume","mountPath":"/jar"}]}]'
+      labels:
+        app: admin
+    spec:
+      containers:
+      - env:
+        - name: heartBeat
+          value: 172.30.248.207:6030
+        - name: transFer
+          value: 172.30.248.207:8433
+        - name: projectName
+          value: nbo
+        image: 172.21.7.11:5000/newtouchone/deployimage-jdk-1.8.0_73:v4.2-1.0.1
+        name: runtime
+        volumeMounts:
+        - mountPath: /jar
+          name: volume
+      nodeSelector:
+        FUN: DOCKER
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubernetesReverseproxy: '{"hosts": [{"host": "admin.one2.newtouch.com","http": "true",
+      "port": "80","nodePort":"30004"}]}'
+  labels:
+    app: admin
+  name: admin
+  namespace: newtouchone
+spec:
+  ports:
+  - nodePort: 30004
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: admin
+  sessionAffinity: None
+  type: NodePort
+
