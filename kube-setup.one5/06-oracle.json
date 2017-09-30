@@ -1,0 +1,96 @@
+{
+    "kind": "ReplicationController",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "paas-oracle",
+        "namespace": "newtouchone",
+        "labels": {
+            "instanceEngineType": "OracleDB",
+            "instanceId": "paas-oracle",
+            "paas": "paas"
+        }
+    },
+    "spec": {
+        "replicas": 1,
+        "selector": {
+            "instanceId": "paas-oracle"
+        },
+        "template": {
+            "metadata": {
+                "name": "paas-oracle",
+                "namespace": "newtouchone",
+                "creationTimestamp": null,
+                "labels": {
+                    "instanceEngineType": "OracleDB",
+                    "instanceId": "paas-oracle",
+                    "paas": "paas"
+                }
+            },
+            "spec": {
+                "volumes": [{
+                        "name": "data",
+                        "rbd": {
+                            "monitors": [
+                                "10.26.7.87:6789"
+                            ],
+                            "image": "oraclepaas",
+                            "fsType": "ext4",
+                            "pool": "paas",
+                            "user": "admin",
+                            "keyring": "/etc/ceph/keyring",
+                            "secretRef": {
+                                "name": "ceph-secret-newtouch-one"
+                            }
+                        }
+                    },
+                    {
+                        "name": "shm",
+                        "emptyDir": {
+                            "medium": "Memory"
+                        }
+                    }
+                ],
+                "containers": [{
+                    "name": "paas-oracle",
+                    "image": "110.26.7.87:5000/newtouchone/oracle-database:11.2.0.2-xe",
+                    "ports": [{
+                            "containerPort": 1521,
+                            "protocol": "TCP"
+                        },
+                        {
+                            "containerPort": 8080,
+                            "protocol": "TCP"
+                        }
+                    ],
+                    "env": [{
+                        "name": "ORACLE_PWD",
+                        "value": "Accp1234"
+                    }],
+                    "resources": {
+                        "limits": {
+                            "cpu": "2",
+                            "memory": "4096M"
+                        }
+                    },
+                    "volumeMounts": [{
+                            "name": "data",
+                            "mountPath": "/u01/app/oracle/oradata"
+                        },
+                        {
+                            "name": "shm",
+                            "mountPath": "/dev/shm"
+                        }
+                    ],
+                    "terminationMessagePath": "/dev/termination-log",
+                    "terminationMessagePolicy": "File",
+                    "imagePullPolicy": "Always"
+                }],
+                "restartPolicy": "Always",
+                "terminationGracePeriodSeconds": 30,
+                "dnsPolicy": "ClusterFirst",
+                "securityContext": {},
+                "schedulerName": "default-scheduler"
+            }
+        }
+    }
+}

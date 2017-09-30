@@ -142,3 +142,5 @@ oracle.install.db.OPER_GROUP=oper
 ```
 
 
+GDBNAME=ora11g
+SID=orcl

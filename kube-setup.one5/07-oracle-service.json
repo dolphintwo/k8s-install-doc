@@ -1,0 +1,31 @@
+{
+    "kind": "Service",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "paas-oracle",
+        "namespace": "newtouchone",
+        "labels": {
+            "instanceId": "paas-oracle",
+            "paas": "paas"
+        }
+    },
+    "spec": {
+        "ports": [{
+                "name": "1521",
+                "protocol": "TCP",
+                "port": 1521,
+                "targetPort": 1521
+            },
+            {
+                "name": "8080",
+                "protocol": "TCP",
+                "port": 8080,
+                "targetPort": 8080
+            }
+        ],
+        "selector": {
+            "instanceId": "paas-oracle"
+        },
+        "type": "NodePort"
+    }
+}
