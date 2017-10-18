@@ -1,0 +1,95 @@
+[ip]
+10.26.5.97      proxy
+10.26.7.84      master
+10.26.7.87      registry
+10.26.7.86      node1
+10.26.7.80      node2
+10.26.7.82      node3
+10.26.7.81      oracle
+
+[lists]
+proxy       ansible_host=10.26.5.97 ansible_port=22
+master      ansible_host=10.26.7.84 ansible_port=22
+registry    ansible_host=10.26.7.87 ansible_host=22
+node1       ansible_host=10.26.7.86 ansible_port=22
+node2       ansible_host=10.26.7.80 ansible_port=22
+node3       ansible_host=10.26.7.82 ansible_port=22
+oracle      ansible_host=10.26.7.81 ansible_port=22
+
+[Store]
+proxy		50xfs
+master		50xfs	500ext4
+registry	50xfs	500ext4		100xfs
+node1		50xfs	500ext4
+node2		50xfs	500ext4
+node3		50xfs	500ext4
+
+fdisk -S 56 /dev/vdb
+fdisk -l
+mkfs.ext4 /dev/vdb1
+echo '/dev/vdb1 /mnt ext4 defaults 0 0' >> /etc/fstab
+mount -a
+
+kubectl label nodes 10.26.5.97 PROXY=TRUE
+kubectl label nodes 10.26.7.86 FUN=DOCKER
+kubectl label nodes 10.26.7.86 BUILD=TRUE
+kubectl label nodes 10.26.7.86 SERVICE=TRUE
+kubectl label nodes 10.26.7.80 FUN=DOCKER
+kubectl label nodes 10.26.7.80 BUILD=TRUE
+kubectl label nodes 10.26.7.80 SERVICE=TRUE
+kubectl label nodes 10.26.7.82 FUN=DOCKER
+kubectl label nodes 10.26.7.82 BUILD=TRUE
+kubectl label nodes 10.26.7.82 SERVICE=TRUE
+kubectl label nodes 10.26.7.87 CEPH=TRUE
+kubectl label nodes 10.26.7.87 REGISTRY=TRUE
+
+
+删除标签 
+kubectl label nodes 10.26.7.86 FUN-
+修改标签
+kubectl label nodes 10.26.7.86 FUN=AAAAA --overwrite
+
+
+create /nginx/public {"description":"ONE5测试环境域名代理","domain":"one5.newtouch.com","externalAddress":["183.66.65.220"],"internalAddress":["10.26.5.97"],"name":"public"}
+
+create /nginx/public/k8s {"description":"K8S公网代理","host":"k8s.one5.newtouch.com","http":"true","name":"dashboard","port":"80","realServers":["kubernetes-dashboard.kube-system:80"]}
+
+create /nginx/public/oracle {"description": "ORACLE代理","name": "oracle","port": "31521","realServers": ["10.26.7.81:1521"],"tcp": "true"}
+
+create /nginx/public/zookeeper {"description": "ZK公网代理，勿删！","name": "zookeeper","port": "2181","realServers": ["zookeeper.newtouchone:2181"],"tcp": "true"}
+
+配置kubelet
+kubectl config set-cluster kubernetes --certificate-authority=/etc/kubernetes/ssl/ca.pem --embed-certs=true --server=https://172.21.7.11:6443 --kubeconfig=bootstrap.kubeconfig
+kubectl config set-credentials kubelet-bootstrap --token=41f7e4ba8b7be874fcff18bf5cf41a7c --kubeconfig=bootstrap.kubeconfig
+kubectl config set-context default --cluster=kubernetes --user=kubelet-bootstrap --kubeconfig=bootstrap.kubeconfig
+kubectl config use-context default --kubeconfig=bootstrap.kubeconfig
+mv bootstrap.kubeconfig /etc/kubernetes/
+
+配置kube-proxy
+kubectl config set-cluster kubernetes --certificate-authority=/etc/kubernetes/ssl/ca.pem --embed-certs=true --server=https://172.21.7.11:6443 --kubeconfig=kube-proxy.kubeconfig
+kubectl config set-credentials kube-proxy --client-certificate=/etc/kubernetes/ssl/kube-proxy.pem --client-key=/etc/kubernetes/ssl/kube-proxy-key.pem --embed-certs=true --kubeconfig=kube-proxy.kubeconfig
+kubectl config set-context default --cluster=kubernetes --user=kube-proxy --kubeconfig=kube-proxy.kubeconfig
+kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
+mv kube-proxy.kubeconfig /etc/kubernetes/
+
+
+create /nginx/public {"description":"ONE5开发测试环境域名代理","domain":"one5.newtouch.com","externalAddress":["183.66.65.220"],"internalAddress":["10.26.5.97"],"name":"public"}
+
+create /nginx/public/dashboard {"description":"DASHBOARD公网代理，勿删！","host":"k8s.one5.newtouch.com","http":"true","name":"dashboard","port":"80","realServers":["10.26.5.97:31175"]}
+
+create /nginx/public/rabbitmq {"description":"rabbitmq公网代理，勿删！","host":"rabbitmq.one5.newtouch.com","http":"true","name":"rabbitmq","port":"80","realServers":["183.66.65.220:32157"]}
+
+
+
+docker tag schedule-v4.2.6:20171017 172.21.7.11:5000/newtouchone/nboimages-schedule:v4.2.6-171017
+docker tag opt-v4.2.6:20171017 172.21.7.11:5000/newtouchone/nboimages-opt:v4.2.6-171017
+docker tag api-v4.2.6:20171017 172.21.7.11:5000/newtouchone/nboimages-api:v4.2.6-171017
+docker tag admin-v4.2.6:20171017 172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.6-171017
+docker rmi schedule-v4.2.6:20171017
+docker rmi opt-v4.2.6:20171017
+docker rmi api-v4.2.6:20171017
+docker rmi admin-v4.2.6:20171017
+docker push 172.21.7.11:5000/newtouchone/nboimages-schedule:v4.2.6-171017
+docker push 172.21.7.11:5000/newtouchone/nboimages-api:v4.2.6-171017
+docker push 172.21.7.11:5000/newtouchone/nboimages-opt:v4.2.6-171017
+docker push 172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.6-171017
