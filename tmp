@@ -93,3 +93,68 @@ docker push 172.21.7.11:5000/newtouchone/nboimages-schedule:v4.2.6-171017
 docker push 172.21.7.11:5000/newtouchone/nboimages-api:v4.2.6-171017
 docker push 172.21.7.11:5000/newtouchone/nboimages-opt:v4.2.6-171017
 docker push 172.21.7.11:5000/newtouchone/nboimages-admin:v4.2.6-171017
+
+
+
+
+
+https://code.newtouch.com/newtouchone/k8s-ansible.git
+
+103.36.173.80   master
+103.36.173.215  node1
+103.36.173.216  node2
+
+
+172.28.15.166   master
+172.28.15.168   node1
+172.28.15.167   node2
+
+
+
+[etcdservers]
+etcd1 ansible_host=172.28.15.166 ansible_port=22 etcd_master=true
+
+[kuber_master]
+master1 ansible_host=172.28.15.166 ansible_port=22
+
+[kuber_node]
+master ansible_host=172.28.15.166 ansible_port=22
+node1 ansible_host=172.28.15.168 ansible_port=22
+node2 ansible_host=172.28.15.167 ansible_port=22
+
+[kubernetes:children]
+kuber_master
+kuber_node
+
+[kuber_and_etcd:children]
+kubernetes
+etcdservers
+
+[registry]
+registry1 ansible_host=172.28.15.168 ansible_port=22
+
+[kube_master_and_registry:children]
+kuber_master
+registry
+
+[kuber_node_and_registry:children]
+kuber_node
+registry
+
+[kuber_and_etcd_and_registry:children]
+kuber_and_etcd
+registry
+
+[ceph]
+ceph1 ansible_host=172.28.15.167 ansible_port=22
+
+[kuber_and_ceph:children]
+kubernetes
+ceph
+
+[kuber_and_ceph_and_registry:children]
+kuber_and_ceph
+registry
+
+[kuber_addition_node]
+addon1 ansible_host=172.28.15.166 ansible_port=22 
