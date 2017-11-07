@@ -112,7 +112,7 @@ https://code.newtouch.com/newtouchone/k8s-ansible.git
 
 
 [etcdservers]
-etcd1 ansible_host=172.28.15.166 ansible_port=22 etcd_master=true
+etcd1 ansible_host=172.28.15.166 ansible_port=22
 
 [kuber_master]
 master1 ansible_host=172.28.15.166 ansible_port=22
@@ -158,3 +158,65 @@ registry
 
 [kuber_addition_node]
 addon1 ansible_host=172.28.15.166 ansible_port=22 
+
+
+
+
+docker rmi b09e3c1daa97
+docker rmi b09e3c1daa97
+docker rmi d9d80c0ce15a
+docker rmi a25fb02fb7d2
+docker rmi f33c2d7cfd60
+docker rmi 6b57f2cad3c8
+docker rmi 69baa4bf6d36
+docker rmi b8f878729caf
+docker rmi ecb05c5f6c62
+
+
+
+ansible_host
+proxy       ansible_host=172.21.4.3   ansible_port=22
+master      ansible_host=172.21.4.6   ansible_port=22
+registry    ansible_host=172.21.7.11  ansible_port=22
+node1       ansible_host=172.21.7.13  ansible_port=22
+node2       ansible_host=172.21.7.14  ansible_port=22
+node3       ansible_host=172.21.7.15  ansible_port=22
+node4       ansible_host=172.21.7.20  ansible_port=22
+node5       ansible_host=172.21.1.31  ansible_port=22
+node6       ansible_host=172.21.1.33  ansible_port=22
+node-ceph   ansible_host=172.21.1.35  ansible_port=22
+etcd1       ansible_host=172.21.1.30  ansible_port=22
+etcd2       ansible_host=172.21.7.12  ansible_port=22
+etcd3       ansible_host=172.21.7.16  ansible_port=22
+node-build1 ansible_host=172.21.4.20  ansible_port=22
+node-build2 ansible_host=172.21.4.11  ansible_port=22
+
+hosts
+172.21.4.3   proxy       
+172.21.4.6   master      
+172.21.7.11  registry    
+172.21.7.13  node1       
+172.21.7.14  node2       
+172.21.7.15  node3       
+172.21.7.20  node4       
+172.21.1.31  node5       
+172.21.1.33  node6       
+172.21.1.35  node-ceph   
+172.21.1.30  etcd1       
+172.21.7.12  etcd2       
+172.21.7.16  etcd3       
+172.21.4.20  node-build1 
+172.21.4.11  node-build2 
+
+免密登录
+scp ~/.ssh/id_rsa.pub root@{主机名}:/tmp
+
+cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+
+查看cpu
+cat /proc/cpuinfo| grep \"physical id\"| sort| uniq| wc -l
+查看内存
+cat /proc/meminfo | grep MemTotal
+查看磁盘大小
+fdisk -l |grep '/dev/'
