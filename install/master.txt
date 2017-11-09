@@ -1,0 +1,376 @@
+[root@master ~]# ls
+install  kubernetes  kubernetes-server-linux-amd64.tar.gz  linux-3.18.40  linux-3.18.40.tar.xz  ssl
+[root@master ~]# cd install/
+[root@master install]# ls
+kubernetes  kubernetes-server-linux-amd64.tar.gz
+[root@master install]# kubectl config set-cluster kubernetes \
+>   --certificate-authority=/etc/kubernetes/ssl/ca.pem \
+>   --embed-certs=true \
+>   --server=https://172.21.4.6:6443
+Cluster "kubernetes" set.
+[root@master install]# kubectl config set-credentials admin \
+>   --client-certificate=/etc/kubernetes/ssl/admin.pem \
+>   --embed-certs=true \
+>   --client-key=/etc/kubernetes/ssl/admin-key.pem
+User "admin" set.
+[root@master install]# kubectl config set-context kubernetes \
+>   --cluster=kubernetes \
+>   --user=admin
+Context "kubernetes" set.
+[root@master install]# kubectl config use-context kubernetes
+Switched to context "kubernetes".
+[root@master install]# ls
+kubernetes  kubernetes-server-linux-amd64.tar.gz
+[root@master install]# ll ~/.kube/config
+-rw------- 1 root root 6258 11月  8 14:48 /root/.kube/config
+[root@master install]# kubectl get svc kubernetes
+The connection to the server 172.21.4.6:6443 was refused - did you specify the right host or port?
+[root@master install]# cat > token.csv <<EOF
+> 41f7e4ba8b7be874fcff18bf5cf41a7c,kubelet-bootstrap,10001,"system:kubelet-bootstrap"
+> EOF
+[root@master install]# mv token.csv /etc/kubernetes/
+[root@master install]# cat  > kube-apiserver.service <<EOF
+> [Unit]
+> Description=Kubernetes API Server
+> Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+> After=network.target
+>
+> [Service]
+> ExecStart=/usr/bin/kube-apiserver \\
+>   --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota \\
+>   --advertise-address=172.21.4.6 \\
+>   --bind-address=172.21.4.6 \\
+>   --insecure-bind-address=127.0.0.1 \\
+>   --authorization-mode=RBAC \\
+>   --runtime-config=rbac.authorization.k8s.io/v1alpha1 \\
+>   --runtime-config=autoscaling/v2alpha1=true \\
+>   --kubelet-https=true \\
+>   --experimental-bootstrap-token-auth \\
+>   --token-auth-file=/etc/kubernetes/token.csv \\
+>   --service-cluster-ip-range=10.254.0.0/16 \\
+>   --service-node-port-range=30000-32500 \\
+>   --tls-cert-file=/etc/kubernetes/ssl/kubernetes.pem \\
+>   --tls-private-key-file=/etc/kubernetes/ssl/kubernetes-key.pem \\
+>   --client-ca-file=/etc/kubernetes/ssl/ca.pem \\
+>   --service-account-key-file=/etc/kubernetes/ssl/ca-key.pem \\
+>   --etcd-servers=http://172.21.1.30:2379,http://172.21.7.12:2379,http://172.21.7.16:2379 \\
+
+▽
+[Unit]
+>   --enable-swagger-ui=true \\
+
+▽
+  --tls-private-key-file=/etc/kubernetes/ssl/kubernetes-key.pem \
+>   --allow-privileged=true \\
+>   --apiserver-count=3 \\
+>   --audit-log-maxage=30 \\
+>   --audit-log-maxbackup=3 \\
+>   --audit-log-maxsize=100 \\
+>   --audit-log-path=/var/lib/audit.log \\
+>   --event-ttl=1h \\
+>   --v=2
+> Restart=on-failure
+> RestartSec=5
+> Type=notify
+> LimitNOFILE=65536
+>
+> [Install]
+> WantedBy=multi-user.target
+> EOF
+[root@master install]# ls
+kube-apiserver.service  kubernetes  kubernetes-server-linux-amd64.tar.gz
+[root@master install]# vim kube-apiserver.service
+[root@master install]# vim kube-apiserver.service
+[root@master install]# sudo cp kube-apiserver.service /usr/lib/systemd/system/
+[root@master install]# systemctl daemon-reload
+[root@master install]# systemctl enable kube
+kube-apiserver.service  kubelet.service         kube-proxy.service
+[root@master install]# systemctl enable kube-apiserver.service
+ln -s '/usr/lib/systemd/system/kube-apiserver.service' '/etc/systemd/system/multi-user.target.wants/kube-apiserver.service'
+[root@master install]# cat /etc/systemd/system/multi-user.target.wants/kube-apiserver.service
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/kube-apiserver \
+  --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota \
+  --advertise-address=172.21.4.6 \
+  --bind-address=172.21.4.6 \
+  --insecure-bind-address=127.0.0.1 \
+  --authorization-mode=RBAC \
+  --runtime-config=rbac.authorization.k8s.io/v1alpha1 \
+  --runtime-config=autoscaling/v2alpha1=true \
+  --kubelet-https=true \
+  --experimental-bootstrap-token-auth \
+  --token-auth-file=/etc/kubernetes/token.csv \
+  --service-cluster-ip-range=10.254.0.0/16 \
+  --service-node-port-range=30000-32500 \
+  --tls-cert-file=/etc/kubernetes/ssl/kubernetes.pem \
+  --tls-private-key-file=/etc/kubernetes/ssl/kubernetes-key.pem \
+  --client-ca-file=/etc/kubernetes/ssl/ca.pem \
+  --service-account-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --etcd-servers=http://172.21.1.30:2379,http://172.21.7.12:2379,http://172.21.7.16:2379 \
+  --enable-swagger-ui=true \
+  --allow-privileged=true \
+  --apiserver-count=3 \
+  --audit-log-maxage=30 \
+  --audit-log-maxbackup=3 \
+  --audit-log-maxsize=100 \
+  --audit-log-path=/var/lib/audit.log \
+  --event-ttl=1h \
+  --v=2
+Restart=on-failure
+RestartSec=5
+Type=notify
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+[root@master install]# q
+-bash: q: 未找到命令
+[root@master install]# systemctl start kube-apiserver
+[root@master install]# systemctl status kube-apiserver
+kube-apiserver.service - Kubernetes API Server
+   Loaded: loaded (/usr/lib/systemd/system/kube-apiserver.service; enabled)
+   Active: active (running) since 三 2017-11-08 14:58:59 CST; 5s ago
+     Docs: https://github.com/GoogleCloudPlatform/kubernetes
+ Main PID: 17329 (kube-apiserver)
+   CGroup: /system.slice/kube-apiserver.service
+           └─17329 /usr/bin/kube-apiserver --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota --advertise-address=172.21....
+
+11月 08 14:59:03 master kube-apiserver[17329]: I1108 14:59:03.413163   17329 wrap.go:75] GET /apis/rbac.authorization.k8s.io/v1beta1/namespaces/kube-public/rol...4.6:49537]
+11月 08 14:59:03 master kube-apiserver[17329]: I1108 14:59:03.432319   17329 wrap.go:75] POST /apis/rbac.authorization.k8s.io/v1beta1/namespaces/kube-public/ro...4.6:49537]
+11月 08 14:59:03 master kube-apiserver[17329]: I1108 14:59:03.432558   17329 storage_rbac.go:257] created rolebinding.rbac.authorization.k8s.io/system:controll...ube-public
+11月 08 14:59:03 master kube-apiserver[17329]: I1108 14:59:03.861659   17329 logs.go:41] http: TLS handshake error from 172.21.1.35:42884: EOF
+11月 08 14:59:04 master kube-apiserver[17329]: I1108 14:59:04.198215   17329 logs.go:41] http: TLS handshake error from 172.21.1.35:42887: EOF
+11月 08 14:59:04 master kube-apiserver[17329]: I1108 14:59:04.202399   17329 logs.go:41] http: TLS handshake error from 172.21.1.35:42888: EOF
+11月 08 14:59:04 master kube-apiserver[17329]: I1108 14:59:04.206203   17329 logs.go:41] http: TLS handshake error from 172.21.1.35:42889: EOF
+11月 08 14:59:05 master kube-apiserver[17329]: I1108 14:59:05.203777   17329 logs.go:41] http: TLS handshake error from 172.21.1.35:42892: EOF
+11月 08 14:59:05 master kube-apiserver[17329]: I1108 14:59:05.208696   17329 logs.go:41] http: TLS handshake error from 172.21.1.35:42893: EOF
+11月 08 14:59:05 master kube-apiserver[17329]: I1108 14:59:05.212799   17329 logs.go:41] http: TLS handshake error from 172.21.1.35:42894: EOF
+Hint: Some lines were ellipsized, use -l to show in full.
+[root@master install]# kubectl get svc kubernetes
+NAME         CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   10.254.0.1   <none>        443/TCP   21s
+[root@master install]# cat > kube-controller-manager.service <<EOF
+> [Unit]
+> Description=Kubernetes Controller Manager
+> Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+>
+> [Service]
+> ExecStart=/usr/bin/kube-controller-manager \\
+
+▽
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/usr/bin/kube-controller-manager \
+  --address=127.0.0.1 \
+  --master=http://172.21.4.6:8080 \
+  --allocate-node-cidrs=true \
+  --service-cluster-ip-range=10.254.0.0/16 \
+  --cluster-cidr=172.30.0.0/16 \
+  --cluster-name=kubernetes \
+  --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem \
+  --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --service-account-private-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --root-ca-file=/etc/kubernetes/ssl/ca.pem \
+  --leader-elect=true \
+  --v=2
+Restart=on-failure
+RestartSec=5
+-- 插入 --                                          8,29         顶端
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/usr/bin/kube-controller-manager \
+  --address=127.0.0.1 \
+  --master=http://172.21.4.6:8080 \
+  --allocate-node-cidrs=true \
+  --service-cluster-ip-range=10.254.0.0/16 \
+  --cluster-cidr=172.30.0.0/16 \
+  --cluster-name=kubernetes \
+  --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem \
+  --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --service-account-private-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --root-ca-file=/etc/kubernetes/ssl/ca.pem \
+  --leader-elect=true \
+  --v=2
+Restart=on-failure
+RestartSec=5
+-- 插入 --                                      8,29         顶端
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/usr/bin/kube-controller-manager \
+  --address=127.0.0.1 \
+  --master=http://172.21.4.6:8080 \
+  --allocate-node-cidrs=true \
+  --service-cluster-ip-range=10.254.0.0/16 \
+  --cluster-cidr=172.30.0.0/16 \
+  --cluster-name=kubernetes \
+  --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem \
+  --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --service-account-private-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --root-ca-file=/etc/kubernetes/ssl/ca.pem \
+  --leader-elect=true \
+  --v=2
+Restart=on-failure
+RestartSec=5
+-- 插入 --             8,29         顶端
+[Unit]
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/usr/bin/kube-controller-manager \
+  --address=127.0.0.1 \
+  --master=http://172.21.4.6:8080 \
+  --allocate-node-cidrs=true \
+  --service-cluster-ip-range=10.254.0.0/16 \
+  --cluster-cidr=172.30.0.0/16 \
+  --cluster-name=kubernetes \
+  --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem \
+  --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --service-account-private-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --root-ca-file=/etc/kubernetes/ssl/ca.pem \
+  --leader-elect=true \
+  --v=2
+Restart=on-failure
+RestartSec=5
+-- 插入 --  8,29         顶端
+[Unit]
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/usr/bin/kube-controller-manager \
+  --address=127.0.0.1 \
+  --master=http://172.21.4.6:8080 \
+  --allocate-node-cidrs=true \
+  --service-cluster-ip-range=10.254.0.0/16 \
+  --cluster-cidr=172.30.0.0/16 \
+  --cluster-name=kubernetes \
+  --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem \
+  --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --service-account-private-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --root-ca-file=/etc/kubernetes/ssl/ca.pem \
+  --leader-elect=true \
+  --v=2
+Restart=on-failure
+RestartSec=5
+-- 插入 --                                                                                      8,29         顶端
+[Unit]
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/usr/bin/kube-controller-manager \
+  --address=127.0.0.1 \
+  --master=http://172.21.4.6:8080 \
+  --allocate-node-cidrs=true \
+  --service-cluster-ip-range=10.254.0.0/16 \
+  --cluster-cidr=172.30.0.0/16 \
+  --cluster-name=kubernetes \
+  --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem \
+  --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --service-account-private-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --root-ca-file=/etc/kubernetes/ssl/ca.pem \
+  --leader-elect=true \
+  --v=2
+Restart=on-failure
+RestartSec=5
+-- 插入 --                                                                                     8,29         顶端
+[Unit]
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+ExecStart=/usr/bin/kube-controller-manager \
+  --address=127.0.0.1 \
+  --master=http://172.21.4.6:8080 \
+  --allocate-node-cidrs=true \
+  --service-cluster-ip-range=10.254.0.0/16 \
+  --cluster-cidr=172.30.0.0/16 \
+  --cluster-name=kubernetes \
+  --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem \
+  --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --service-account-private-key-file=/etc/kubernetes/ssl/ca-key.pem \
+  --root-ca-file=/etc/kubernetes/ssl/ca.pem \
+  --leader-elect=true \
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+-- 插入 --                                                                                     8,29         顶端
+[Unit]
+>   --address=127.0.0.1 \\
+>   --master=http://10.26.6.1:8080 \\
+>   --allocate-node-cidrs=true \\
+>   --service-cluster-ip-range=10.254.0.0/16 \\
+>   --cluster-cidr=172.30.0.0/16 \\
+>   --cluster-name=kubernetes \\
+>   --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem \\
+>   --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem \\
+>   --service-account-private-key-file=/etc/kubernetes/ssl/ca-key.pem \\
+>   --root-ca-file=/etc/kubernetes/ssl/ca.pem \\
+>   --leader-elect=true \\
+
+▽
+[Unit]
+>   --v=2
+> Restart=on-failure
+> RestartSec=5
+>
+> [Install]
+> WantedBy=multi-user.target
+> EOF
+[root@master install]#
+[root@master install]# vim kube-controller-manager.service
+[root@master install]# cp kube-controller-manager.service /usr/lib/systemd/system/
+[root@master install]# kubectl get componentstatuses
+NAME                 STATUS      MESSAGE                                                                                        ERROR
+scheduler            Unhealthy   Get http://127.0.0.1:10251/healthz: dial tcp 127.0.0.1:10251: getsockopt: connection refused
+controller-manager   Unhealthy   Get http://127.0.0.1:10252/healthz: dial tcp 127.0.0.1:10252: getsockopt: connection refused
+etcd-2               Healthy     {"health": "true"}
+etcd-1               Healthy     {"health": "true"}
+etcd-0               Healthy     {"health": "true"}
+[root@master install]# systemctl daemon-reload
+[root@master install]# systemctl enable kube-controller-manager
+ln -s '/usr/lib/systemd/system/kube-controller-manager.service' '/etc/systemd/system/multi-user.target.wants/kube-controller-manager.service'
+[root@master install]# systemctl start kube-controller-manager
+[root@master install]# cat > kube-scheduler.service <<EOF
+> [Unit]
+> Description=Kubernetes Scheduler
+> Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+>
+> [Service]
+> ExecStart=/usr/bin/kube-scheduler \\
+>   --address=127.0.0.1 \\
+>   --master=http://10.26.6.1:8080 \\
+>   --leader-elect=true \\
+>   --v=2
+> Restart=on-failure
+> RestartSec=5
+>
+> [Install]
+> WantedBy=multi-user.target
+> EOF
+[root@master install]# vim kube-scheduler.service
+[root@master install]# cp kube-scheduler.service /usr/lib/systemd/system/
+[root@master install]# systemctl daemon-reload
+[root@master install]# systemctl enable kube-scheduler
+ln -s '/usr/lib/systemd/system/kube-scheduler.service' '/etc/systemd/system/multi-user.target.wants/kube-scheduler.service'
+[root@master install]# systemctl start kube-scheduler
+[root@master install]# kubectl get componentstatuses
+NAME                 STATUS    MESSAGE              ERROR
+scheduler            Healthy   ok
+controller-manager   Healthy   ok
+etcd-1               Healthy   {"health": "true"}
+etcd-2               Healthy   {"health": "true"}
+etcd-0               Healthy   {"health": "true"}

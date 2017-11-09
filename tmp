@@ -175,38 +175,40 @@ docker rmi ecb05c5f6c62
 
 
 ansible_host
+[list]
 proxy       ansible_host=172.21.4.3   ansible_port=22
 master      ansible_host=172.21.4.6   ansible_port=22
-registry    ansible_host=172.21.7.11  ansible_port=22
-node1       ansible_host=172.21.7.13  ansible_port=22
-node2       ansible_host=172.21.7.14  ansible_port=22
-node3       ansible_host=172.21.7.15  ansible_port=22
-node4       ansible_host=172.21.7.20  ansible_port=22
-node5       ansible_host=172.21.1.31  ansible_port=22
-node6       ansible_host=172.21.1.33  ansible_port=22
-node-ceph   ansible_host=172.21.1.35  ansible_port=22
+node1       ansible_host=172.21.7.11  ansible_port=22
+node2       ansible_host=172.21.7.13  ansible_port=22
+node3       ansible_host=172.21.7.14  ansible_port=22
+node4       ansible_host=172.21.7.15  ansible_port=22
+node5       ansible_host=172.21.7.20  ansible_port=22
+node-build1 ansible_host=172.21.1.31  ansible_port=22
+node-build2 ansible_host=172.21.1.33  ansible_port=22
+registry    ansible_host=172.21.1.35  ansible_port=22
 etcd1       ansible_host=172.21.1.30  ansible_port=22
 etcd2       ansible_host=172.21.7.12  ansible_port=22
 etcd3       ansible_host=172.21.7.16  ansible_port=22
-node-build1 ansible_host=172.21.4.20  ansible_port=22
-node-build2 ansible_host=172.21.4.11  ansible_port=22
+oracle      ansible_host=172.21.4.20  ansible_port=22
+ceph        ansible_host=172.21.4.11  ansible_port=22
 
 hosts
-172.21.4.3   proxy       
-172.21.4.6   master      
-172.21.7.11  registry    
-172.21.7.13  node1       
-172.21.7.14  node2       
-172.21.7.15  node3       
-172.21.7.20  node4       
-172.21.1.31  node5       
-172.21.1.33  node6       
-172.21.1.35  node-ceph   
-172.21.1.30  etcd1       
-172.21.7.12  etcd2       
-172.21.7.16  etcd3       
-172.21.4.20  node-build1 
-172.21.4.11  node-build2 
+172.21.4.3   proxy
+172.21.4.6   master
+172.21.7.11  node1
+172.21.7.13  node2
+172.21.7.14  node3
+172.21.7.15  node4
+172.21.7.20  node5
+172.21.1.31  node-build1
+172.21.1.33  node-build2
+172.21.1.35  registry
+172.21.1.30  etcd1
+172.21.7.12  etcd2
+172.21.7.16  etcd3
+172.21.4.11  ceph
+172.21.4.20  oracle
+
 
 免密登录
 scp ~/.ssh/id_rsa.pub root@{主机名}:/tmp
@@ -220,3 +222,137 @@ cat /proc/cpuinfo| grep \"physical id\"| sort| uniq| wc -l
 cat /proc/meminfo | grep MemTotal
 查看磁盘大小
 fdisk -l |grep '/dev/'
+
+fdisk -S 56 /dev/vdb
+mkfs.ext4 /dev/vdb1
+vim /etc/fstab
+/dev/vdb1 /mnt ext4 defaults 0 0
+
+/usr/bin/etcdctl \
+  --endpoints=http://172.21.1.30:2379,http://172.21.7.12:2379,http://172.21.7.16:2379 \
+  set /kubernetes/network/config '{"Network":"'172.30.0.0/16'", "SubnetLen": 24, "Backend": {"Type": "vxlan"}}'
+
+
+## master
+kubectl config set-cluster kubernetes \
+  --certificate-authority=/etc/kubernetes/ssl/ca.pem \
+  --embed-certs=true \
+  --server=https://172.21.4.6:6443
+
+kubectl config set-credentials admin \
+  --client-certificate=/etc/kubernetes/ssl/admin.pem \
+  --embed-certs=true \
+  --client-key=/etc/kubernetes/ssl/admin-key.pem
+
+kubectl config set-context kubernetes \
+  --cluster=kubernetes \
+  --user=admin
+
+kubectl config use-context kubernetes
+
+/usr/bin/etcdctl \
+  --endpoints=ttp://172.21.1.30:2379,http://172.21.7.12:2379,http://172.21.7.16:2379 \
+  ls /kubernetes/network/subnets
+
+cat > /etc/docker/daemon.json <<EOF
+  {
+    "storage-driver":"overlay",
+    "graph":"/mnt/docker",
+    "registry-mirrors": ["https://docker.mirrors.ustc.edu.cn", "hub-mirror.c.163.com"],
+     "insecure-registries" : ["registry.one2.newtouch.com:5000","172.21.1.35:5000"]
+  }
+EOF
+
+
+scp 172.21.4.6:/root/.kube/config /root/.kube/config
+
+kubectl config set-cluster kubernetes \
+  --certificate-authority=/etc/kubernetes/ssl/ca.pem \
+  --embed-certs=true \
+  --server=https://172.21.4.6:6443 \
+  --kubeconfig=bootstrap.kubeconfig
+
+kubectl config set-credentials kubelet-bootstrap \
+  --token=41f7e4ba8b7be874fcff18bf5cf41a7c \
+  --kubeconfig=bootstrap.kubeconfig
+
+kubectl config set-context default \
+  --cluster=kubernetes \
+  --user=kubelet-bootstrap \
+  --kubeconfig=bootstrap.kubeconfig
+
+  cat > kubelet.service <<EOF
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=docker.service
+Requires=docker.service
+
+[Service]
+WorkingDirectory=/var/lib/kubelet
+ExecStart=/usr/bin/kubelet \\
+  --address=172.21.4.3 \\
+  --hostname-override=172.21.4.3 \\
+  --pod-infra-container-image=10.26.6.1:5000/google_containers/pause-amd64:3.0 \\
+  --experimental-bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \\
+  --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \\
+  --require-kubeconfig \\
+  --cert-dir=/etc/kubernetes/ssl \\
+  --cluster-dns=10.254.0.2 \\
+  --cluster-domain=cluster.local. \\
+  --hairpin-mode promiscuous-bridge \\
+  --allow-privileged=true \\
+  --serialize-image-pulls=false \\
+  --logtostderr=true \\
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+docker run -d -p 5000:5000 --restart=always --name registry \
+           -v /root/registry/certs:/certs \
+           -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry.pem \
+           -e REGISTRY_HTTP_TLS_KEY=/certs/registry-key.pem \
+           registry:2.6
+
+mkdir -p /etc/docker/certs.d/172.21.1.35:5000
+cp /etc/kubernetes/ssl/ca.pem /etc/docker/certs.d/172.21.1.35:5000/ca.crt
+
+cat > kubelet.service <<EOF
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=docker.service
+Requires=docker.service
+
+[Service]
+WorkingDirectory=/var/lib/kubelet
+ExecStart=/usr/bin/kubelet \\
+  --address=10.26.6.2 \\
+  --hostname-override=10.26.6.2 \\
+  --pod-infra-container-image=172.21.1.35:5000/newtouchone/pod-infrastructure:latest \\
+  --experimental-bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \\
+  --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \\
+  --require-kubeconfig \\
+  --cert-dir=/etc/kubernetes/ssl \\
+  --cluster-dns=10.254.0.2 \\
+  --cluster-domain=cluster.local. \\
+  --hairpin-mode promiscuous-bridge \\
+  --allow-privileged=true \\
+  --serialize-image-pulls=false \\
+  --logtostderr=true \\
+  --v=2
+ExecStartPost=/sbin/iptables -A INPUT -s 10.0.0.0/8 -p tcp --dport 4194 -j ACCEPT
+ExecStartPost=/sbin/iptables -A INPUT -s 172.16.0.0/12 -p tcp --dport 4194 -j ACCEPT
+ExecStartPost=/sbin/iptables -A INPUT -s 192.168.0.0/16 -p tcp --dport 4194 -j ACCEPT
+ExecStartPost=/sbin/iptables -A INPUT -p tcp --dport 4194 -j DROP
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
