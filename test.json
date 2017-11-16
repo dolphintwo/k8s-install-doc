@@ -1,0 +1,59 @@
+{
+    "_port_comment": "字符串，Heketi REST服务端口号",
+    "port": "8000",
+
+    "_use_auth": "是否启用JWT身份验证",
+    "use_auth": false,
+
+    "_jwt": "JWT验证设置",
+    "jwt": {
+        "_admin": "Heketi管理员",
+        "admin": {
+            "key": "admin"
+        },
+        "_user": "Heketi卷的设置请求访问用户",
+        "user": {
+            "key": "test"
+        }
+    },
+
+    "_glusterfs_comment": "GlusterFS设置",
+    "glusterfs": {
+        "_executor_comment": [
+            "确定要使用的命令执行器的类型。环境变量HEKETI_EXECUTOR也可用于自定义执行器类型",
+            "mock: 不发送任何命令到服务器。可用于开发和测试",
+            "ssh:  通过ssh发送命令到真实的系统",
+            "kubernetes: 通过Kubernetes执行与GlusterFS容器通信"
+        ],
+        "executor": "ssh",
+
+        "_sshexec_comment": "SSH配置",
+        "sshexec": {
+            "keyfile": "/etc/heketi/heketi_key",
+            "user": "root",
+            "port": "22",
+            "fstab": "/etc/fstab",
+            "sudo": false
+        },
+
+        "_kubeexec_comment": "Kubernetes configuration",
+        "kubeexec": {
+            "host": "https://kubernetes.host:8443",
+            "cert": "/path/to/crt.file",
+            "insecure": false,
+            "user": "kubernetes username",
+            "password": "password for kubernetes user",
+            "namespace": "OpenShift project or Kubernetes namespace",
+            "fstab": "Optional: Specify fstab file on node.  Default is /etc/fstab"
+        },
+
+        "_db_comment": "Heketi数据库的位置,卷挂载的目录",
+        "db": "/var/lib/heketi/heketi.db",
+
+        "_loglevel_comment": [
+            "设置日志级别。可能的值是：",
+            "  none（无）, critical（关键）, error（错误）, warning（警告）, info（信息）, debug（调试）"
+        ],
+        "loglevel": "debug"
+    }
+}

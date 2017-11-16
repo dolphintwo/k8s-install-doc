@@ -140,7 +140,7 @@ ExecStart=/usr/bin/kubelet \
   --logtostderr=true \
   --v=2
 ExecStopPost=/sbin/iptables -A INPUT -s 10.0.0.0/8 -p tcp --dport 4194 -j ACCEPT
-ExecStopPost=/sbin/iptables -A INPUT -s 172.16.0.0/12 -p tcp --dport 4194 -j ACCEPT
+ExecStopPost=/sbin/iptables -A INPUT -s 172.21.0.0/12 -p tcp --dport 4194 -j ACCEPT
 ExecStopPost=/sbin/iptables -A INPUT -s 192.168.0.0/16 -p tcp --dport 4194 -j ACCEPT
 ExecStopPost=/sbin/iptables -A INPUT -p tcp --dport 4194 -j DROP
 Restart=on-failure
@@ -163,11 +163,11 @@ kubectl get nodes
 ## kube-proxy
 
 配置kube-proxy
-kubectl config set-cluster kubernetes --certificate-authority=/etc/kubernetes/ssl/ca.pem --embed-certs=true --server=https://172.21.7.11:6443 --kubeconfig=kube-proxy.kubeconfig
+kubectl config set-cluster kubernetes --certificate-authority=/etc/kubernetes/ssl/ca.pem --embed-certs=true --server=https://172.21.4.6:6443 --kubeconfig=kube-proxy.kubeconfig
 kubectl config set-credentials kube-proxy --client-certificate=/etc/kubernetes/ssl/kube-proxy.pem --client-key=/etc/kubernetes/ssl/kube-proxy-key.pem --embed-certs=true --kubeconfig=kube-proxy.kubeconfig
 kubectl config set-context default --cluster=kubernetes --user=kube-proxy --kubeconfig=kube-proxy.kubeconfig
 kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
-mv kube-proxy.kubeconfig /etc/kubernetes/
+cp kube-proxy.kubeconfig /etc/kubernetes/
 
 
 mkdir -p /var/lib/kube-proxy

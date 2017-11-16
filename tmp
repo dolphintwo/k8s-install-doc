@@ -332,27 +332,216 @@ Requires=docker.service
 [Service]
 WorkingDirectory=/var/lib/kubelet
 ExecStart=/usr/bin/kubelet \
-  --address=10.26.6.2 \
-  --hostname-override=10.26.6.2 \
+  --address=172.21.7.20 \
+  --hostname-override=172.21.7.20 \
   --pod-infra-container-image=172.21.1.35:5000/newtouchone/pod-infrastructure:latest \
   --experimental-bootstrap-kubeconfig=/etc/kubernetes/bootstrap.kubeconfig \
   --kubeconfig=/etc/kubernetes/kubelet.kubeconfig \
   --require-kubeconfig \
   --cert-dir=/etc/kubernetes/ssl \
-  --cluster-dns=10.254.0.2 \
-  --cluster-domain=cluster.local. \
+  --cluster_dns=10.254.0.2 \
+  --cluster_domain=cluster.local. \
   --hairpin-mode promiscuous-bridge \
   --allow-privileged=true \
   --serialize-image-pulls=false \
   --logtostderr=true \
   --v=2
-ExecStartPost=/sbin/iptables -A INPUT -s 10.0.0.0/8 -p tcp --dport 4194 -j ACCEPT
-ExecStartPost=/sbin/iptables -A INPUT -s 172.16.0.0/12 -p tcp --dport 4194 -j ACCEPT
-ExecStartPost=/sbin/iptables -A INPUT -s 192.168.0.0/16 -p tcp --dport 4194 -j ACCEPT
-ExecStartPost=/sbin/iptables -A INPUT -p tcp --dport 4194 -j DROP
 Restart=on-failure
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
 EOF
+
+
+kubectl config set-cluster kubernetes  --certificate-authority=/etc/kubernetes/ssl/ca.pem  --embed-certs=true  --server=https://172.21.4.3:6443  --kubeconfig=kube-proxy.kubeconfig
+
+kubectl config set-credentials kube-proxy  --client-certificate=/etc/kubernetes/ssl/kube-proxy.pem  --client-key=/etc/kubernetes/ssl/kube-proxy-key.pem  --embed-certs=true  --kubeconfig=kube-proxy.kubeconfig
+
+kubectl config set-context default  --cluster=kubernetes  --user=kube-proxy  --kubeconfig=kube-proxy.kubeconfig
+
+kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
+
+mv kube-proxy.kubeconfig /etc/kubernetes/
+
+
+
+[Unit]
+Description=Kubernetes Kube-Proxy Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+WorkingDirectory=/var/lib/kube-proxy
+ExecStart=/usr/bin/kube-proxy \\
+  --bind-address=172.21. \\
+  --hostname-override=172.21. \\
+  --cluster-cidr=10.254.0.0/16 \\
+  --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig \\
+  --logtostderr=true \\
+  --v=2
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+vim /root/install/kube-proxy.service
+
+
+scp /root/install/kube-proxy.service node1:/root/install/kube-proxy.service
+
+
+scp /root/install/kube-proxy.service node3:/root/install/
+scp /root/install/kube-proxy.service node4:/root/install/
+scp /root/install/kube-proxy.service node5:/root/install/
+scp /root/install/kube-proxy.service node-build1:/root/install/
+scp /root/install/kube-proxy.service node-build2:/root/install/
+scp /root/install/kube-proxy.service registry:/root/install/
+scp /root/install/kube-proxy.service ceph:/root/install/
+
+
+kubectl delete csr csr-2m9n4
+kubectl delete csr csr-41g8v
+kubectl delete csr csr-55s8z
+kubectl delete csr csr-7rq86
+kubectl delete csr csr-8jfk6
+kubectl delete csr csr-8pf9f
+kubectl delete csr csr-bp15j
+kubectl delete csr csr-bvklm
+kubectl delete csr csr-bxkrq
+kubectl delete csr csr-cs4n3
+kubectl delete csr csr-dh52n
+kubectl delete csr csr-dlt8q
+kubectl delete csr csr-f5dz9
+kubectl delete csr csr-g5m1m
+kubectl delete csr csr-kfsps
+kubectl delete csr csr-l7x2l
+kubectl delete csr csr-lnm4c
+kubectl delete csr csr-lqr3q
+kubectl delete csr csr-mzmr5
+kubectl delete csr csr-nd6z2
+kubectl delete csr csr-ngxj1
+kubectl delete csr csr-nptvz
+kubectl delete csr csr-p6cv5
+kubectl delete csr csr-pj180
+kubectl delete csr csr-qmdc3
+kubectl delete csr csr-qv5r6
+kubectl delete csr csr-qzfg3
+kubectl delete csr csr-rbs2x
+kubectl delete csr csr-rnlh6
+kubectl delete csr csr-rsk6f
+kubectl delete csr csr-tgsx3
+kubectl delete csr csr-thltw
+kubectl delete csr csr-tsmq2
+kubectl delete csr csr-v5zw4
+kubectl delete csr csr-w5pr8
+kubectl delete csr csr-x37vb
+kubectl delete csr csr-xpsrx
+kubectl delete csr csr-xz770
+
+
+
+kubectl config set-cluster kubernetes \
+  --certificate-authority=/etc/kubernetes/ssl/ca.pem \
+  --embed-certs=true \
+  --server=https://172.21.4.6:6443 \
+  --kubeconfig=bootstrap.kubeconfig
+
+
+
+cp /etc/kubernetes/ssl/ca.pem /etc/docker/certs.d/172.21.1.35\:5000/ca.crt
+
+
+
+
+
+kubectl label nodes 172.21.1.31 BUILD=TRUE
+kubectl label nodes 172.21.1.33 BUILD=TRUE
+kubectl label nodes 172.21.7.11 FUN=DOCKER
+kubectl label nodes 172.21.7.13 FUN=DOCKER
+kubectl label nodes 172.21.7.14 FUN=DOCKER
+kubectl label nodes 172.21.4.11 CEPH=TRUE
+kubectl label nodes 172.21.7.15 FUN=SERVICE
+kubectl label nodes 172.21.7.20 FUN=SERVICE
+kubectl label nodes 172.21.1.35 REGISTRY=TRUE
+kubectl label nodes 172.21.4.3 PROXY=TRUE
+
+
+docker push 172.21.1.35:5000/newtouchone/ceph-bucket-client:latest       
+docker push 172.21.1.35:5000/newtouchone/ceph-daemon:latest       
+docker push 172.21.1.35:5000/newtouchone/mysql:5.7       
+docker push 172.21.1.35:5000/newtouchone/pod-infrastructure:latest       
+docker push 172.21.1.35:5000/newtouchone/one-nginx:1.0          
+docker push 172.21.1.35:5000/newtouchone/sonarqube:6.3          
+docker push 172.21.1.35:5000/newtouchone/heapster-influxdb-amd64:v1.1.1       
+docker push 172.21.1.35:5000/newtouchone/heapster-grafana-amd64:v4.0.2       
+docker push 172.21.1.35:5000/newtouchone/heapster-amd64:v1.3.0-beta.1
+docker push 172.21.1.35:5000/newtouchone/kubernetes-dashboard-amd64:v1.6.0       
+docker push 172.21.1.35:5000/newtouchone/k8s-dns-sidecar-amd64:1.14.1       
+docker push 172.21.1.35:5000/newtouchone/k8s-dns-kube-dns-amd64:1.14.1       
+docker push 172.21.1.35:5000/newtouchone/k8s-dns-dnsmasq-nanny-amd64:1.14.1       
+docker push 172.21.1.35:5000/newtouchone/v4-zookeeper:3.4.9        
+docker push 172.21.1.35:5000/newtouchone/nt-mysql:5.7          
+docker push 172.21.1.35:5000/newtouchone/nt-redis:3.2.4        
+docker push 172.21.1.35:5000/newtouchone/jdk1.8:2.0          
+docker push 172.21.1.35:5000/newtouchone/paas-ceph-wrapper:20161013     
+docker push 172.21.1.35:5000/newtouchone/busybox:1.24         
+docker push 172.21.1.35:5000/newtouchone/rabbitmq:3.5.4
+
+172.21.1.35:5000/newtouchone/filebeat                      5.5.0               3db540c2b4e1        3 months ago        337.2 MB
+172.21.1.35:5000/newtouchone/serviceimage-minio            latest              9086d237ee44        3 months ago        26.15 MB
+172.21.1.35:5000/newtouchone/ceph-bucket-client            latest              38207b48781b        3 months ago        444.5 MB
+172.21.1.35:5000/newtouchone/ceph-daemon                   latest              5b0068edae12        3 months ago        1.062 GB
+172.21.1.35:5000/newtouchone/mysql                         5.7                 c73c7527c03a        3 months ago        412.3 MB
+registry.one2.newtouch.com:5000/newtouchone/registry       2.6                 751f286bc25e        3 months ago        33.19 MB
+registry                                                   2.6                 751f286bc25e        3 months ago        33.19 MB
+172.21.1.35:5000/newtouchone/grafana                       latest              91db9f85b198        4 months ago        287 MB
+172.21.1.35:5000/newtouchone/pod-infrastructure            latest              f66f4bd9b894        4 months ago        205.8 MB
+172.21.1.35:5000/newtouchone/prometheus                    v1.7.1              4da113bb6ae3        5 months ago        74.49 MB
+172.21.1.35:5000/newtouchone/one-nginx                     1.0                 394939d05210        6 months ago        542.5 MB
+172.21.1.35:5000/newtouchone/sonarqube                     6.3                 752d427d3de6        7 months ago        770 MB
+172.21.1.35:5000/newtouchone/heapster-influxdb-amd64       v1.1.1              84ea2168af3a        7 months ago        11.59 MB
+172.21.1.35:5000/newtouchone/heapster-grafana-amd64        v4.0.2              bf19523c18fb        7 months ago        131.5 MB
+172.21.1.35:5000/newtouchone/heapster-amd64                v1.3.0-beta.1       9613c43f747c        7 months ago        101.3 MB
+172.21.1.35:5000/newtouchone/kubernetes-dashboard-amd64    v1.6.0              416701f962f2        7 months ago        108.6 MB
+172.21.1.35:5000/newtouchone/k8s-dns-sidecar-amd64         1.14.1              fc5e302d8309        8 months ago        44.52 MB
+172.21.1.35:5000/newtouchone/k8s-dns-kube-dns-amd64        1.14.1              f8363dbf447b        8 months ago        52.36 MB
+172.21.1.35:5000/newtouchone/k8s-dns-dnsmasq-nanny-amd64   1.14.1              1091847716ec        8 months ago        44.84 MB
+172.21.1.35:5000/newtouchone/v4-zookeeper                  3.4.9               2834fb8fd569        10 months ago       154.9 MB
+172.21.1.35:5000/newtouchone/nt-mysql                      5.7                 08b4c32eb1c8        12 months ago       413.8 MB
+172.21.1.35:5000/newtouchone/nt-redis                      3.2.4               915baeafd7f0        12 months ago       204.5 MB
+172.21.1.35:5000/newtouchone/jdk1.8                        2.0                 d89b3ddfb21a        12 months ago       732.1 MB
+172.21.1.35:5000/newtouchone/paas-ceph-wrapper             20161013            2958405b1b6d        13 months ago       420.4 MB
+172.21.1.35:5000/newtouchone/busybox                       1.24                0cb40641836c        22 months ago       1.114 MB
+172.21.1.35:5000/newtouchone/rabbitmq                      3.5.4               9b015b75a854        2 years ago         227.2 MB
+
+
+
+
+oracle创建表空间 
+
+create temporary tablespace onetest 
+tempfile '/u01/app/oracle/oradata/orcl11g/onetest.dbf' 
+size 100m  
+autoextend on  
+next 100m maxsize 20480m  
+extent management local; 
+
+
+
+create tablespace onetest_data  
+logging  
+datafile '/u01/app/oracle/oradata/orcl11g/onetest_data.dbf' 
+size 100m  
+autoextend on  
+next 100m maxsize 20480m  
+extent management local; 
+
+create user onetest identified by onetest  
+default tablespace onetest_data  
+temporary tablespace onetest; 
+
+
+grant connect,resource,dba to onetest;
