@@ -545,3 +545,12 @@ temporary tablespace onetest;
 
 
 grant connect,resource,dba to onetest;
+
+
+create /nginx/public/glusterui {"description":"glusterui","host":"glusterui.one4.newtouch.com","http":"true","name":"glusterui","port":"80","realServers":["172.21.9.86:8080"]}
+create /nginx/public/glusterapi {"description":"glusterapi","host":"glusterapi.one4.newtouch.com","http":"true","name":"glusterapi","port":"80","realServers":["172.21.9.86:8000"]}
+
+./zkCli.sh -server zookeeper.newtouchone:2181
+
+
+

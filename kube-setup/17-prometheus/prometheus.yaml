@@ -1,0 +1,80 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    name: prometheus
+  name: prometheus
+  namespace: monitor
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: prometheus-server
+    spec:
+      nodeSelector:
+        FUN: SERVICE
+      containers:
+        - name: prometheus
+          image: 172.21.1.35:5000/newtouchone/prometheus:v1.7.1
+          command:
+            - "/bin/prometheus"
+          args:
+            - "-config.file=/etc/prometheus/prometheus.yml"
+            - "-storage.local.path=/prometheus"
+            - "-storage.local.retention=24h"
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+          volumeMounts:
+            - mountPath: "/prometheus"
+              name: data
+            - mountPath: "/etc/prometheus"
+              name: prometheus-config-volume
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 500m
+              memory: 2500Mi
+      serviceAccountName: prometheus
+      serviceAccount: prometheus
+      volumes:
+        - name: data
+          rbd:
+            monitors:
+              - '172.21.4.11:6789'
+            pool: paas
+            image: one-prometheus
+            user: admin
+            secretRef:
+              name: ceph-secret-newtouch-one
+            fsType: ext4
+            readOnly: false
+        - name: prometheus-config-volume
+          configMap:
+            name: prometheus-config
+            items:
+              - key: prometheus.yml
+                path: prometheus.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: prometheus
+  name: prometheus
+  namespace: monitor
+spec:
+  ports:
+    - nodePort: 30090
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+  selector:
+    name: prometheus-server
+  sessionAffinity: None
+  type: NodePort

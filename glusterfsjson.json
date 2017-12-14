@@ -1,0 +1,27 @@
+// post http://glusterapi.one4.newtouch.com/clusters
+{
+    "id": "3a47ceb6280353daad2c18fe6b5701d8",
+    "nodes": [],
+    "volumes": []
+}
+
+// post http://glusterapi.one4.newtouch.com/nodes
+{
+    "zone": 1,
+    "hostnames": {
+        "manage": [
+            "172.21.3.32"
+        ],
+        "storage": [
+            "172.21.3.32"
+        ]
+    },
+    "cluster": "3a47ceb6280353daad2c18fe6b5701d8"
+}
+
+//post http://glusterapi.one4.newtouch.com/devices
+
+{
+    "node": "a3615effbc098a2393530182981f2c1a",
+    "name": "/dev/vdb"
+}
