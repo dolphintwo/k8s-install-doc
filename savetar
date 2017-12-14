@@ -29,24 +29,23 @@ tar -czvf buildimage.tar.gz buildimage.tar
 s3cmd put buildimage.tar.gz s3://images/4.2.7/
 
 docker save -o deployimage.tar \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-7.0.79:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-6.0.9:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-8.0.36:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-8.5.20:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-9.0.0.m26:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-jdk-1.7.0_79:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-jdk-1.8.0_73:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-jdk-1.6.0_35:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-jdk-1.5.0_22:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-python-2.7:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-python-3.3:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-python-3.4:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-python-3.5:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-php-7.0.18:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-nodejs-5.11.1:v4.2.7-release \
-registry.one2.newtouch.com:5000/newtouchone/deployimage-nodejs-7.2:v4.2.7-release
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-7.0.79:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-6.0.9:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-8.0.36:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-9.0.0.m26:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-jdk-1.7.0_79:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-jdk-1.8.0_73:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-jdk-1.6.0_35:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-jdk-1.5.0_22:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-python-2.7:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-python-3.3:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-python-3.4:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-python-3.5:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployimage-php-7.0.18:v4.2.7-release \
+  registry.one2.newtouch.com:5000/newtouchone/deployment-java-8u151-2:v4.2.7-release
 
 tar -czvf deployimage.tar.gz deployimage.tar
+
 s3cmd put deployimage.tar.gz s3://images/4.2.7/
 
 

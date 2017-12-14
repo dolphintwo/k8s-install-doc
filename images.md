@@ -64,3 +64,10 @@ nboimage.tar.gz
   registry.one2.newtouch.com:5000/newtouchone/paas:v1.3.1-1201
 
 
+
+
+
+
+
+
+docker images | awk '{print $1":"$2}'
