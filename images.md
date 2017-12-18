@@ -20,7 +20,6 @@ deployimage.tar.gz
   registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-7.0.79:v4.2.7-release
   registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-6.0.9:v4.2.7-release
   registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-8.0.36:v4.2.7-release
-  registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-8.5.20:v4.2.7-release
   registry.one2.newtouch.com:5000/newtouchone/deployimage-tomcat-9.0.0.m26:v4.2.7-release
   registry.one2.newtouch.com:5000/newtouchone/deployimage-jdk-1.7.0_79:v4.2.7-release
   registry.one2.newtouch.com:5000/newtouchone/deployimage-jdk-1.8.0_73:v4.2.7-release
@@ -31,8 +30,7 @@ deployimage.tar.gz
   registry.one2.newtouch.com:5000/newtouchone/deployimage-python-3.4:v4.2.7-release
   registry.one2.newtouch.com:5000/newtouchone/deployimage-python-3.5:v4.2.7-release
   registry.one2.newtouch.com:5000/newtouchone/deployimage-php-7.0.18:v4.2.7-release
-  registry.one2.newtouch.com:5000/newtouchone/deployimage-nodejs-5.11.1:v4.2.7-release
-  registry.one2.newtouch.com:5000/newtouchone/deployimage-nodejs-7.2:v4.2.7-release
+  registry.one2.newtouch.com:5000/newtouchone/deployment-java-8u151-2:v4.2.7-release
 serviceimage.tar.gz
   registry.one2.newtouch.com:5000/newtouchone/serviceimage-rabbitmq:3.5.4
   registry.one2.newtouch.com:5000/newtouchone/serviceimage-zookeeper:3.4.10
@@ -56,18 +54,12 @@ paasimage.tar.gz
   registry.one2.newtouch.com:5000/newtouchone/paasimages-mongodb:3.4.0
   registry.one2.newtouch.com:5000/newtouchone/paasimages-oracle:12c
 nboimage.tar.gz
-  registry.one2.newtouch.com:5000/newtouchone/cicd-admin:v4.2.7-1128
-  registry.one2.newtouch.com:5000/newtouchone/cicd-api:v4.2.7-1129
-  registry.one2.newtouch.com:5000/newtouchone/cicd-schedule:v4.2.7-1129
-  registry.one2.newtouch.com:5000/newtouchone/cicd-log:v4.2.7-1120
-  registry.one2.newtouch.com:5000/newtouchone/monitor:v4.2.7-1120
-  registry.one2.newtouch.com:5000/newtouchone/paas:v1.3.1-1201
-
-
-
-
-
-
+  registry.one2.newtouch.com:5000/newtouchone/cicd-api:v4.2.7-1213
+  registry.one2.newtouch.com:5000/newtouchone/cicd-admin:v4.2.7-1213
+  registry.one2.newtouch.com:5000/newtouchone/log:v4.2.7-1213
+  registry.one2.newtouch.com:5000/newtouchone/monitor:v4.2.7-1213
+  registry.one2.newtouch.com:5000/newtouchone/cicd-schedule:v4.2.7-1213
+  registry.one2.newtouch.com:5000/newtouchone/paas-1.3.1:16
 
 
 docker images | awk '{print $1":"$2}'
