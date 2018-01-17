@@ -62,7 +62,8 @@ registry.one2.newtouch.com:5000/newtouchone/serviceimage-prometheus:1.7.1 \
 registry.one2.newtouch.com:5000/newtouchone/minio:latest \
 registry.one2.newtouch.com:5000/newtouchone/serviceimage-ceph-daemon:0.80.7 \
 registry.one2.newtouch.com:5000/newtouchone/serviceimage-ceph-client:0.80.7 \
-registry.one2.newtouch.com:5000/gluster/gluster-centos:latest
+registry.one2.newtouch.com:5000/gluster/gluster-centos:latest \
+registry.one2.newtouch.com:5000/newtouchone/s3server:latest
 
 tar -czvf serviceimage.tar.gz serviceimage.tar
 s3cmd put serviceimage.tar.gz s3://images/4.2.7/
@@ -90,3 +91,4 @@ registry.one2.newtouch.com:5000/newtouchone/paas-1.3.1:16
 
 tar -czvf nboimage.tar.gz nboimage.tar
 s3cmd put nboimage.tar.gz s3://images/4.2.7/
+

@@ -18,5 +18,7 @@ spec:
         ports:
         - containerPort: 5672
         env:
-        - name: RABBITMQ_PASS
+        - name: RABBITMQ_DEFAULT_USER
+          value: admin
+        - name: RABBITMQ_DEFAULT_PASS
           value: admin

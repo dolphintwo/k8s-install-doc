@@ -51,7 +51,7 @@ $ ansible-playbook -i hosts install_k8s_node.yml
 检查各个node节点[
 	systemctl status kube-proxy
 	kubectl get nodes
-	检查docker网卡和flanneld网卡在同一c网段，如果不是重启该台机器
+	检查docker网卡和flanneld网卡在同一c类子网段，如果不是重启该台机器
 ]
 	
 $ ansible-playbook -i hosts install_registry.yml

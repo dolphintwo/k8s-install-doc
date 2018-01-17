@@ -7,6 +7,7 @@ cp prometheus.yml prometheus.yml_bak
 
 cat ~/.ssh/id_rsa.pub | ssh root@116.196.101.123 "mkdir -p ~/.ssh && cat >>  ~/.ssh/authorized_keys"
 cat ~/.ssh/id_rsa.pub | ssh root@60.205.231.165 "mkdir -p ~/.ssh && cat >>  ~/.ssh/authorized_keys"
+cat ~/.ssh/id_rsa.pub | ssh root@192.168.216.156 "mkdir -p ~/.ssh && cat >>  ~/.ssh/authorized_keys"
 hostnamectl set-hostname hbjdc4d
 passwd
 yum install -y docker git gcc gcc-c++ ncurses-devel zlib zlib-devel openssl openssl--devel pcre pcre-devel vim lrzsz unzip
